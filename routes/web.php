@@ -23,7 +23,7 @@ Route::get('/', function () {
 });
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', Login::class)->name('login');
+    Route::match(['get', 'post'], '/login', Login::class)->name('login');
 });
 
 Route::post('/logout', function () {

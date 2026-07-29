@@ -11,7 +11,7 @@
         </p>
     </div>
 
-    <form wire:submit="login" method="POST" class="space-y-6">
+    <form wire:submit="login" class="space-y-6">
         <x-input
             wire:model="email_or_username"
             label="ئیمەیڵ یاخود ناوی بەکارهێنەر"
