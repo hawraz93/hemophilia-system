@@ -136,10 +136,17 @@
     <!-- Create / Edit Patient Modal -->
     <x-modal wire:model="showCreateModal" max-width="4xl">
         <x-card title="تۆمارکردن / دەستکاری نەخۆش">
-            <form wire:submit="save" class="space-y-6">
-                <!-- Section 1: Personal Info -->
-                <div class="space-y-4">
-                    <h3 class="text-sm font-extrabold text-red-600 border-b pb-2">١- زانیاری کەسی</h3>
+            <form wire:submit="save" class="space-y-6 max-h-[78vh] overflow-y-auto px-1">
+                <!-- Section 1: Personal Info Card -->
+                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
+                        <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-black text-xs">١</span>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <x-icon name="user" class="w-4 h-4 text-indigo-500" />
+                            <span>زانیاری کەسی</span>
+                        </h3>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <x-input wire:model="first_name" label="ناوی ناوخۆیی (یەکەم) *" placeholder="ئارام" />
                         <x-input wire:model="father_name" label="ناوی باوک *" placeholder="کامەران" />
@@ -178,9 +185,16 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Identity Info -->
-                <div class="space-y-4 pt-4 border-t">
-                    <h3 class="text-sm font-extrabold text-red-600 border-b pb-2">٢- زانیاری ناسنامە</h3>
+                <!-- Section 2: Identity Info Card -->
+                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
+                        <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black text-xs">٢</span>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <x-icon name="identification" class="w-4 h-4 text-cyan-500" />
+                            <span>زانیاری ناسنامە و کۆدەکان</span>
+                        </h3>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <x-input wire:model="patient_code" label="کۆدی نەخۆش (Patient Code)" readonly />
                         <x-input wire:model="hiwa_code" label="کۆدی نەخۆشخانەی هیوا" placeholder="HW-1234" />
@@ -189,9 +203,16 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Medical Info -->
-                <div class="space-y-4 pt-4 border-t">
-                    <h3 class="text-sm font-extrabold text-red-600 border-b pb-2">٣- زانیاری تەندروستی و پزیشکی</h3>
+                <!-- Section 3: Medical Info Card -->
+                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
+                        <span class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center font-black text-xs">٣</span>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <x-icon name="heart" class="w-4 h-4 text-rose-500" />
+                            <span>زانیاری تەندروستی و پزیشکی</span>
+                        </h3>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <x-native-select wire:model="hemophilia_type" label="جۆری هیمۆفیلیا">
                             <option value="A">هیمۆفیلیا A</option>
@@ -251,9 +272,10 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                    <x-button type="submit" primary label="پاشەکەوتکردن" class="font-bold" />
+                <!-- Sticky Action Footer -->
+                <div class="sticky bottom-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md pt-4 pb-2 border-t border-slate-200 dark:border-slate-700/80 flex items-center justify-end gap-3 z-10">
+                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" class="font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" />
+                    <x-button type="submit" primary label="پاشەکەوتکردنی زانیارییەکان" icon="check" class="font-bold shadow-md shadow-red-600/20" />
                 </div>
             </form>
         </x-card>
