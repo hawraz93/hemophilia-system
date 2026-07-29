@@ -45,6 +45,54 @@ class UserIndex extends Component
         session()->flash('message', 'بەکارهێنەری نوێ بە سەرکەوتوویی دروستکرا.');
     }
 
+    public bool $showResetModal = false;
+    public ?int $selectedUserId = null;
+    public string $new_password = '';
+
+    public function toggleActive($userId)
+    {
+        $user = User::findOrFail($userId);
+        if ($user->id === auth()->id()) {
+            return;
+        }
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+        session()->flash('message', 'دۆخی بەکارهێنەر نویستکرایەوە.');
+    }
+
+    public function deleteUser($userId)
+    {
+        $user = User::findOrFail($userId);
+        if ($user->id === auth()->id()) {
+            return;
+        }
+
+        $user->delete();
+        session()->flash('message', 'بەکارهێنەر بە سەرکەوتوویی سڕدرایەوە.');
+    }
+
+    public function openResetModal($userId)
+    {
+        $this->selectedUserId = $userId;
+        $this->new_password = '';
+        $this->showResetModal = true;
+    }
+
+    public function resetPassword()
+    {
+        $this->validate([
+            'new_password' => 'required|string|min:6',
+        ]);
+
+        $user = User::findOrFail($this->selectedUserId);
+        $user->password = Hash::make($this->new_password);
+        $user->save();
+
+        $this->showResetModal = false;
+        session()->flash('message', 'وشەی نهێنی بەکارهێنەر بە سەرکەوتوویی گۆڕدرا.');
+    }
+
     public function render()
     {
         $users = User::all();

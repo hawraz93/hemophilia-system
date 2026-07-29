@@ -110,6 +110,11 @@ class Patient extends Model
         return $this->hasMany(OfficialMail::class);
     }
 
+    public function auditLogs(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable')->latest();
+    }
+
     public function getPhotoAttribute(): ?string
     {
         $doc = $this->documents()->where('document_type', 'patient_photo')->latest()->first();

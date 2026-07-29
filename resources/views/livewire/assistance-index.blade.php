@@ -95,37 +95,37 @@
     </div>
 
     <!-- Create Modal -->
-    <x-modal wire:model="showCreateModal">
-        <x-card title="تۆمارکردنی هاوکاری نوێ">
-            <form wire:submit="save" class="space-y-4">
-                <x-native-select wire:model="patient_id" label="هەڵبژاردنی نەخۆش *">
-                    <option value="">نەخۆش هەڵبژێرە...</option>
-                    @foreach($allPatients as $p)
-                        <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
-                    @endforeach
-                </x-native-select>
+    <x-modal-card title="تۆمارکردنی هاوکاری نوێ" wire:model="showCreateModal" max-width="lg">
+        <div class="space-y-4">
+            <x-native-select wire:model="patient_id" label="هەڵبژاردنی نەخۆش *">
+                <option value="">نەخۆش هەڵبژێرە...</option>
+                @foreach($allPatients as $p)
+                    <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
+                @endforeach
+            </x-native-select>
 
-                <x-input type="date" wire:model="assistance_date" label="بەرواری هاوکاری *" />
-                
-                <x-native-select wire:model="category" label="جۆری هاوکاری">
-                    <option value="financial">هاوکاری دارایی</option>
-                    <option value="medication">دەرمان</option>
-                    <option value="food">خواردن و بەشەخۆراک</option>
-                    <option value="medical_supplies">کەرەستەی پزشکی</option>
-                    <option value="surgery">نەشتەرگەری</option>
-                    <option value="transport">گواستنەوە</option>
-                    <option value="other">هاوکاری تر</option>
-                </x-native-select>
+            <x-datetime-picker wire:model="assistance_date" label="بەرواری هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
 
-                <x-input type="number" wire:model="amount" label="بڕی پارە (IQD) *" placeholder="0" />
-                <x-input wire:model="source_funder" label="سەرچاوەی هاوکاری" placeholder="خێرخواز / رێکخراو" />
-                <x-textarea wire:model="notes" label="تێبینی" />
+            <x-native-select wire:model="category" label="جۆری هاوکاری">
+                <option value="financial">هاوکاری دارایی</option>
+                <option value="medication">دەرمان</option>
+                <option value="food">خواردن و بەشەخۆراک</option>
+                <option value="medical_supplies">کەرەستەی پزشکی</option>
+                <option value="surgery">نەشتەرگەری</option>
+                <option value="transport">گواستنەوە</option>
+                <option value="other">هاوکاری تر</option>
+            </x-native-select>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                    <x-button type="submit" primary label="پاشەکەوتکردن" class="font-bold" />
-                </div>
-            </form>
-        </x-card>
-    </x-modal>
+            <x-currency wire:model="amount" label="بڕی پارە (IQD) *" thousands="," :precision="0" placeholder="0" />
+            <x-input wire:model="source_funder" label="سەرچاوەی هاوکاری" placeholder="خێرخواز / رێکخراو" />
+            <x-textarea wire:model="notes" label="تێبینی" />
+        </div>
+
+        <x-slot:footer>
+            <div class="flex justify-end gap-2">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button primary label="پاشەکەوتکردن" wire:click="save" spinner="save" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </x-slot:footer>
+    </x-modal-card>
 </div>

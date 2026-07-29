@@ -13,18 +13,43 @@
     <!-- Users Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         @foreach($users as $user)
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-lg">
-                        {{ mb_substr($user->name, 0, 1) }}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-300 font-black flex items-center justify-center text-lg shrink-0">
+                            {{ mb_substr($user->name, 0, 1) }}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">{{ $user->name }}</h3>
+                            <p class="text-xs text-slate-500 font-mono">{{ $user->email }}</p>
+                            <p class="text-[10px] text-slate-400 font-mono mt-0.5">@ {{ $user->username }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-bold text-slate-900 dark:text-white text-sm">{{ $user->name }}</h3>
-                        <p class="text-xs text-slate-500 font-mono">{{ $user->email }} ({{ $user->username }})</p>
-                        <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/80">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
                             {{ $user->role->label() }}
                         </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md {{ $user->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-600' }}">
+                            {{ $user->is_active ? 'چالاک' : 'ناچالاک' }}
+                        </span>
                     </div>
+
+                    @if($user->id !== auth()->id())
+                        <div class="flex items-center gap-1">
+                            <button wire:click="openResetModal({{ $user->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition" title="گۆڕینی وشەی نهێنی">
+                                <x-icon name="key" class="w-4 h-4" />
+                            </button>
+                            <button wire:click="toggleActive({{ $user->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition" title="گۆڕینی دۆخی بەکارهێنەر">
+                                <x-icon name="arrow-path" class="w-4 h-4" />
+                            </button>
+                            <button wire:click="deleteUser({{ $user->id }})" wire:confirm="دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="سڕینەوەی بەکارهێنەر">
+                                <x-icon name="trash" class="w-4 h-4" />
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endforeach
@@ -74,24 +99,38 @@
     </div>
 
     <!-- Create User Modal -->
-    <x-modal wire:model="showCreateModal">
-        <x-card title="زیادکردنی بەکارهێنەری نوێ">
-            <form wire:submit="save" class="space-y-4">
-                <x-input wire:model="name" label="ناوی ناوخۆیی (Full Name) *" placeholder="کارمەند..." />
-                <x-input wire:model="username" label="ناوی بەکارهێنەر (Username) *" placeholder="user123" />
-                <x-input type="email" wire:model="email" label="ئیمەیڵ *" placeholder="user@hemophilia.org" />
-                <x-password wire:model="password" label="وشەی نهێنی (Password) *" />
-                <x-native-select wire:model="role" label="دەسەڵاتی بەکارهێنەر">
-                    <option value="admin">ئەدمین (دەسەڵاتی تەواو)</option>
-                    <option value="staff">کارمەند (زیادکردن و نوێکردنەوە)</option>
-                    <option value="viewer">بینەر (تەنها بینین)</option>
-                </x-native-select>
+    <x-modal-card title="زیادکردنی بەکارهێنەری نوێ" wire:model="showCreateModal" max-width="md">
+        <div class="space-y-4">
+            <x-input wire:model="name" label="ناوی ناوخۆیی (Full Name) *" placeholder="کارمەند..." />
+            <x-input wire:model="username" label="ناوی بەکارهێنەر (Username) *" placeholder="user123" />
+            <x-input type="email" wire:model="email" label="ئیمەیڵ *" placeholder="user@hemophilia.org" />
+            <x-password wire:model="password" label="وشەی نهێنی (Password) *" />
+            <x-native-select wire:model="role" label="دەسەڵاتی بەکارهێنەر">
+                <option value="admin">ئەدمین (دەسەڵاتی تەواو)</option>
+                <option value="staff">کارمەند (زیادکردن و نوێکردنەوە)</option>
+                <option value="viewer">بینەر (تەنها بینین)</option>
+            </x-native-select>
+        </div>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                    <x-button type="submit" primary label="پاشەکەوتکردن" class="font-bold" />
-                </div>
-            </form>
-        </x-card>
-    </x-modal>
+        <x-slot:footer>
+            <div class="flex justify-end gap-2">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button primary label="پاشەکەوتکردن" wire:click="save" spinner="save" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </x-slot:footer>
+    </x-modal-card>
+
+    <!-- Reset Password Modal -->
+    <x-modal-card title="گۆڕینی وشەی نهێنی بەکارهێنەر" wire:model="showResetModal" max-width="md">
+        <div class="space-y-4">
+            <x-password wire:model="new_password" label="وشەی نهێنی نوێ *" placeholder="******" />
+        </div>
+
+        <x-slot:footer>
+            <div class="flex justify-end gap-2">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button primary label="نوێکردنەوە" wire:click="resetPassword" spinner="resetPassword" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </x-slot:footer>
+    </x-modal-card>
 </div>

@@ -7,7 +7,7 @@
         </div>
 
         @if(!auth()->user()->isViewer())
-            <x-button primary icon="user-plus" wire:click="openCreateModal" class="font-bold">
+            <x-button primary icon="user-plus" href="{{ route('patients.create') }}" class="font-bold shadow-md shadow-rose-600/20">
                 تۆمارکردنی نەخۆشی نوێ
             </x-button>
         @endif
@@ -86,7 +86,7 @@
                                 {{ $patient->patient_code }}
                             </td>
                             <td class="p-4 font-bold text-slate-900 dark:text-white">
-                                <a href="{{ route('patients.show', $patient) }}" class="hover:text-red-600">
+                                <a href="{{ route('patients.show', $patient) }}" class="hover:text-rose-600 transition">
                                     {{ $patient->full_name }}
                                 </a>
                                 @if($patient->membership_number)
@@ -94,7 +94,7 @@
                                 @endif
                             </td>
                             <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                     {{ $patient->hemophilia_type?->label() }} — {{ $patient->severity?->label() }}
                                 </span>
                             </td>
@@ -113,7 +113,7 @@
                             <td class="p-4 text-center space-x-1 space-x-reverse">
                                 <x-button sm outline secondary icon="eye" href="{{ route('patients.show', $patient) }}" />
                                 @if(!auth()->user()->isViewer())
-                                    <x-button sm outline primary icon="pencil-square" wire:click="editPatient({{ $patient->id }})" />
+                                    <x-button sm outline primary icon="pencil-square" href="{{ route('patients.edit', $patient) }}" />
                                 @endif
                             </td>
                         </tr>
@@ -132,152 +132,5 @@
             {{ $patients->links() }}
         </div>
     </div>
-
-    <!-- Create / Edit Patient Modal -->
-    <x-modal wire:model="showCreateModal" max-width="4xl">
-        <x-card title="تۆمارکردن / دەستکاری نەخۆش">
-            <form wire:submit="save" class="space-y-6 max-h-[78vh] overflow-y-auto px-1">
-                <!-- Section 1: Personal Info Card -->
-                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
-                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
-                        <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-black text-xs">١</span>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <x-icon name="user" class="w-4 h-4 text-indigo-500" />
-                            <span>زانیاری کەسی</span>
-                        </h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <x-input wire:model="first_name" label="ناوی ناوخۆیی (یەکەم) *" placeholder="ئارام" />
-                        <x-input wire:model="father_name" label="ناوی باوک *" placeholder="کامەران" />
-                        <x-input wire:model="grandfather_name" label="ناوی باپیر *" placeholder="عەلی" />
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <x-native-select wire:model="gender" label="ڕەگەز">
-                            <option value="male">نێر</option>
-                            <option value="female">مێ</option>
-                        </x-native-select>
-
-                        <x-input type="date" wire:model="dob" label="بەرواری لەدایکبوون" />
-                        <x-input type="number" wire:model="age" label="تەمەن" placeholder="تەمەن" />
-
-                        <x-native-select wire:model="marital_status" label="دۆخی هاوسەرگیری">
-                            <option value="">هەڵبژێرە...</option>
-                            <option value="single">سەڵت</option>
-                            <option value="married">هاوسەردار</option>
-                            <option value="divorced">جیابووەوە</option>
-                            <option value="widowed">بێوەژین / بێوەپیاو</option>
-                        </x-native-select>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <x-input wire:model="phone" label="ژمارەی مۆبایل *" placeholder="0770XXXXXXX" />
-                        <x-input wire:model="secondary_phone" label="ژمارەی مۆبایلی تر" placeholder="0750XXXXXXX" />
-                        <x-input type="number" wire:model="children_count" label="ژمارەی منداڵ" />
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <x-input wire:model="governorate" label="پارێزگا" placeholder="سلێمانی" />
-                        <x-input wire:model="district" label="قەزا" placeholder="مەڵبەند 1" />
-                        <x-input wire:model="neighborhood" label="گەڕەک" placeholder="سەرچنار" />
-                        <x-input wire:model="address" label="ناونیشانی تەواو" placeholder="کۆڵانی ..." />
-                    </div>
-                </div>
-
-                <!-- Section 2: Identity Info Card -->
-                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
-                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
-                        <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black text-xs">٢</span>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <x-icon name="identification" class="w-4 h-4 text-cyan-500" />
-                            <span>زانیاری ناسنامە و کۆدەکان</span>
-                        </h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <x-input wire:model="patient_code" label="کۆدی نەخۆش (Patient Code)" readonly />
-                        <x-input wire:model="hiwa_code" label="کۆدی نەخۆشخانەی هیوا" placeholder="HW-1234" />
-                        <x-input wire:model="membership_number" label="ژمارەی ئەندامێتی کۆمەڵە" placeholder="MEM-101" />
-                        <x-input wire:model="national_id" label="ژمارەی نیشتمانی / ناسنامە" placeholder="1995XXXXXXXX" />
-                    </div>
-                </div>
-
-                <!-- Section 3: Medical Info Card -->
-                <div class="bg-slate-50/80 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
-                    <div class="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-700/80 pb-3">
-                        <span class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center font-black text-xs">٣</span>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <x-icon name="heart" class="w-4 h-4 text-rose-500" />
-                            <span>زانیاری تەندروستی و پزیشکی</span>
-                        </h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <x-native-select wire:model="hemophilia_type" label="جۆری هیمۆفیلیا">
-                            <option value="A">هیمۆفیلیا A</option>
-                            <option value="B">هیمۆفیلیا B</option>
-                            <option value="other">جۆری تر</option>
-                        </x-native-select>
-
-                        <x-native-select wire:model="severity" label="پلەی نەخۆشی">
-                            <option value="mild">سوک (Mild)</option>
-                            <option value="moderate">ناوەند (Moderate)</option>
-                            <option value="severe">سەخت (Severe)</option>
-                        </x-native-select>
-
-                        <x-native-select wire:model="blood_group" label="گروپی خوێن">
-                            <option value="">دیاری نەکراوە</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                        </x-native-select>
-
-                        <x-native-select wire:model="inhibitor_status" label="Inhibitor Status">
-                            <option value="negative">نێگەتیڤ (-)</option>
-                            <option value="positive">پۆزەتیڤ (+)</option>
-                            <option value="unknown">نادیار</option>
-                        </x-native-select>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <x-native-select wire:model="hepatitis_b" label="Hepatitis B">
-                            <option value="negative">نێگەتیڤ (-)</option>
-                            <option value="positive">پۆزەتیڤ (+)</option>
-                            <option value="unknown">نادیار</option>
-                        </x-native-select>
-
-                        <x-native-select wire:model="hepatitis_c" label="Hepatitis C">
-                            <option value="negative">نێگەتیڤ (-)</option>
-                            <option value="positive">پۆزەتیڤ (+)</option>
-                            <option value="unknown">نادیار</option>
-                        </x-native-select>
-
-                        <x-native-select wire:model="hiv" label="HIV">
-                            <option value="negative">نێگەتیڤ (-)</option>
-                            <option value="positive">پۆزەتیڤ (+)</option>
-                            <option value="unknown">نادیار</option>
-                        </x-native-select>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <x-textarea wire:model="comorbidities" label="نەخۆشییە هاوشێوەکان" placeholder="نەخۆشی تر..." />
-                        <x-textarea wire:model="disability_special_needs" label="کێشەی جەستەیی یان پێداویستی تایبەت" placeholder="پێداویستی تایبەت..." />
-                        <x-textarea wire:model="medical_notes" label="تێبینی پزشکی" placeholder="تێبینی پزیشکی نەخۆش..." />
-                    </div>
-                </div>
-
-                <!-- Sticky Action Footer -->
-                <div class="sticky bottom-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md pt-4 pb-2 border-t border-slate-200 dark:border-slate-700/80 flex items-center justify-end gap-3 z-10">
-                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" class="font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" />
-                    <x-button type="submit" primary label="پاشەکەوتکردنی زانیارییەکان" icon="check" class="font-bold shadow-md shadow-red-600/20" />
-                </div>
-            </form>
-        </x-card>
-    </x-modal>
+</div>
 </div>

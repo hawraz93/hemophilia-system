@@ -43,6 +43,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        User::firstOrCreate(
+            ['email' => 'hawraz@gmail.com'],
+            [
+                'name' => 'هاوڕاز (ئەدمین)',
+                'username' => 'hawraz',
+                'password' => Hash::make('password'),
+                'role' => UserRole::Admin,
+                'is_active' => true,
+            ]
+        );
+
         $staff = User::firstOrCreate(
             ['email' => 'staff@hemophilia.org'],
             [
@@ -66,6 +77,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // 2. Patients
+        if (Patient::count() === 0) {
         // Patient 1 - Green List
         $p1 = Patient::create([
             'patient_code' => 'PAT-2026-0001',
@@ -245,5 +257,6 @@ class DatabaseSeeder extends Seeder
             'reason_subject' => 'داواکاری هاوکاری و دابینکردنی فاکتەر',
             'notes' => 'ناردنی نوسراوی پشتگیری بۆ نەخۆشخانە.',
         ]);
+        }
     }
 }

@@ -114,6 +114,24 @@ class PatientShow extends Component
         session()->flash('message', 'بەڵگەنامە بە سەرکەوتوویی بارکرا.');
     }
 
+    public function deleteDocument($docId)
+    {
+        if (auth()->user()->isViewer()) {
+            return;
+        }
+
+        $doc = PatientDocument::where('patient_id', $this->patient->id)->findOrFail($docId);
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($doc->file_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
+        }
+        $doc->delete();
+
+        AuditLoggerService::log('document_deleted', $this->patient);
+
+        $this->patient->refresh();
+        session()->flash('message', 'بەڵگەنامەکە بە سەرکەوتوویی سڕدرایەوە.');
+    }
+
     public function addAssistance()
     {
         $this->validate([

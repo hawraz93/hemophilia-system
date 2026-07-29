@@ -92,37 +92,37 @@
     </div>
 
     <!-- Create Modal -->
-    <x-modal wire:model="showModal">
-        <x-card title="تۆمارکردنی نوسراوی نوێ (هاتوو / ڕۆشتوو)">
-            <form wire:submit="save" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <x-input wire:model="mail_number" label="ژمارەی نوسراو *" placeholder="MAIL-2026-001" />
-                    <x-native-select wire:model="direction" label="جۆری نوسراو">
-                        <option value="incoming">بەشی هاتوو (Incoming)</option>
-                        <option value="outgoing">بەشی ڕۆشتوو (Outgoing)</option>
-                    </x-native-select>
-                </div>
+    <x-modal-card title="تۆمارکردنی نوسراوی نوێ (هاتوو / ڕۆشتوو)" wire:model="showModal" max-width="lg">
+        <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <x-input wire:model="mail_number" label="ژمارەی نوسراو *" placeholder="MAIL-2026-001" />
+                <x-native-select wire:model="direction" label="جۆری نوسراو">
+                    <option value="incoming">بەشی هاتوو (Incoming)</option>
+                    <option value="outgoing">بەشی ڕۆشتوو (Outgoing)</option>
+                </x-native-select>
+            </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <x-input type="date" wire:model="mail_date" label="بەرواری نوسراو *" />
-                    <x-native-select wire:model="patient_id" label="نەخۆشی پەیوەندیدار (ئەگەر هەیە)">
-                        <option value="">نەخۆشی پەیوەندیدار نییە (نوسراوی گشتی)</option>
-                        @foreach($allPatients as $p)
-                            <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
-                        @endforeach
-                    </x-native-select>
-                </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <x-datetime-picker wire:model="mail_date" label="بەرواری نوسراو *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+                <x-native-select wire:model="patient_id" label="نەخۆشی پەیوەندیدار (ئەگەر هەیە)">
+                    <option value="">نەخۆشی پەیوەندیدار نییە (نوسراوی گشتی)</option>
+                    @foreach($allPatients as $p)
+                        <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
+                    @endforeach
+                </x-native-select>
+            </div>
 
-                <x-input wire:model="sender_recipient" label="لایەنی نێرەر / وەرگر *" placeholder="نەخۆشخانەی هیوا / وەزارەتی تەندروستی..." />
-                <x-input wire:model="reason_subject" label="هۆکار / بابەتی نوسراو *" placeholder="داواکاری فاکتەر / نوسراوی پشتگیری..." />
-                
-                <input type="file" wire:model="file" class="w-full text-xs text-slate-500 border p-2 rounded-lg" />
+            <x-input wire:model="sender_recipient" label="لایەنی نێرەر / وەرگر *" placeholder="نەخۆشخانەی هیوا / وەزارەتی تەندروستی..." />
+            <x-input wire:model="reason_subject" label="هۆکار / بابەتی نوسراو *" placeholder="داواکاری فاکتەر / نوسراوی پشتگیری..." />
+            
+            <input type="file" wire:model="file" class="w-full text-xs text-slate-500 border p-2 rounded-lg" />
+        </div>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                    <x-button type="submit" primary label="پاشەکەوتکردن" class="font-bold" />
-                </div>
-            </form>
-        </x-card>
-    </x-modal>
+        <x-slot:footer>
+            <div class="flex justify-end gap-2">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button primary label="پاشەکەوتکردن" wire:click="save" spinner="save" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </x-slot:footer>
+    </x-modal-card>
 </div>

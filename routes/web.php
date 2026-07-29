@@ -7,6 +7,7 @@ use App\Livewire\DashboardComponent;
 use App\Livewire\MedicalIndex;
 use App\Livewire\MembershipIndex;
 use App\Livewire\OfficialMailIndex;
+use App\Livewire\PatientForm;
 use App\Livewire\PatientIndex;
 use App\Livewire\PatientShow;
 use App\Livewire\ReportIndex;
@@ -33,7 +34,9 @@ Route::post('/logout', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardComponent::class)->name('dashboard');
     Route::get('/patients', PatientIndex::class)->name('patients.index');
+    Route::get('/patients/create', PatientForm::class)->name('patients.create');
     Route::get('/patients/{patient}', PatientShow::class)->name('patients.show');
+    Route::get('/patients/{patient}/edit', PatientForm::class)->name('patients.edit');
     Route::get('/assistances', AssistanceIndex::class)->name('assistances.index');
     Route::get('/memberships', MembershipIndex::class)->name('memberships.index');
     Route::get('/contacts', ContactIndex::class)->name('contacts.index');
@@ -49,6 +52,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/patients/{patient}/support-letter', function (Patient $patient) {
         return view('print.support-letter', compact('patient'));
     })->name('patients.support-letter');
+
+    Route::get('/patients/{patient}/summary-report', function (Patient $patient) {
+        $patient->load(['assistances', 'medicalLogs', 'documents', 'contacts', 'membershipPayments']);
+        return view('print.summary-report', compact('patient'));
+    })->name('patients.summary-report');
 
     // Admin Only
     Route::get('/users', UserIndex::class)->name('users.index');
