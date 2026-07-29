@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\AboutDeveloper;
+use App\Livewire\UserProfile;
 use App\Livewire\AssistanceIndex;
 use App\Livewire\Auth\Login;
 use App\Livewire\ContactIndex;
@@ -17,7 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return view('welcome');
 });
 
 Route::middleware('guest')->group(function () {
@@ -43,6 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/medical', MedicalIndex::class)->name('medical.index');
     Route::get('/mails', OfficialMailIndex::class)->name('mails.index');
     Route::get('/reports', ReportIndex::class)->name('reports.index');
+    Route::get('/about-dev', AboutDeveloper::class)->name('about.developer');
+    Route::get('/profile', UserProfile::class)->name('profile');
 
     // Printable Views
     Route::get('/patients/{patient}/id-card', function (Patient $patient) {

@@ -10,6 +10,21 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#e11d48">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="هیمۆفیلیا">
+        <link rel="apple-touch-icon" href="/icon-192.png">
+
+        <script>
+            window.deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                window.deferredPrompt = e;
+            });
+        </script>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
@@ -17,7 +32,7 @@
         <x-notifications position="top-center" />
         <x-dialog />
 
-        <div x-data="{ sidebarOpen: false }" class="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950">
+        <div x-data="{ sidebarOpen: false, showInstallModal: false }" class="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950">
             <!-- Sidebar -->
             <aside 
                 :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
@@ -81,6 +96,11 @@
                         <span>ڕاپۆرتەکان</span>
                     </a>
 
+                    <a href="{{ route('about.developer') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 {{ request()->routeIs('about.developer') ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/25' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <x-icon name="code-bracket" class="w-5 h-5 shrink-0 text-indigo-400" />
+                        <span>دەربارەی گەشەپێدەر (iCode)</span>
+                    </a>
+
                     @if(auth()->user()?->isAdmin())
                         <div class="pt-4 mt-4 border-t border-slate-800/70">
                             <p class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">بەڕێوەبردن</p>
@@ -95,7 +115,7 @@
                 <!-- User Footer Profile -->
                 @auth
                     <div class="p-3 border-t border-slate-800/80 bg-slate-950/80 flex items-center justify-between">
-                        <div class="flex items-center gap-3 overflow-hidden">
+                        <a href="{{ route('profile') }}" class="flex items-center gap-3 overflow-hidden hover:opacity-80 transition" title="پرۆفایلی من">
                             <div class="w-9 h-9 rounded-full bg-slate-800 text-rose-400 font-black flex items-center justify-center text-sm shrink-0 border border-slate-700/80 shadow-inner">
                                 {{ mb_substr(auth()->user()->name, 0, 1) }}
                             </div>
@@ -105,7 +125,7 @@
                                     {{ auth()->user()->role->label() }}
                                 </span>
                             </div>
-                        </div>
+                        </a>
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -131,6 +151,12 @@
                     </div>
 
                     <div class="flex items-center gap-3">
+                        <!-- Install App / PWA Button -->
+                        <button id="pwa-install-btn" @click="if (handleInstallClick()) { showInstallModal = true; }" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white font-black text-xs shadow-md shadow-rose-600/30 hover:from-rose-700 hover:to-red-700 transition flex items-center gap-2 cursor-pointer">
+                            <x-icon name="arrow-down-tray" class="w-4 h-4 animate-bounce" />
+                            <span>دامەزراندنی ئەپ (شۆرکەت)</span>
+                        </button>
+
                         <span class="hidden sm:inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/60 shadow-2xs">
                             <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
                             کۆمەڵەی هیمۆفیلیای کوردستان - سلێمانی
@@ -143,9 +169,71 @@
                     {{ $slot }}
                 </main>
             </div>
+
+            <!-- Beautiful Custom PWA Instructions Modal -->
+            <div x-show="showInstallModal" x-transition.opacity class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
+                <div @click.away="showInstallModal = false" class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 text-right">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black">
+                                <x-icon name="arrow-down-tray" class="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 class="font-black text-slate-900 dark:text-white text-base">دامەزراندنی سیستەم وەک ئەپ</h3>
+                                <p class="text-[11px] text-slate-400">دەستگەیشتنی خێرا لەسەر مۆبایل و کامپیوتەر</p>
+                            </div>
+                        </div>
+                        <button @click="showInstallModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-xl">
+                            <x-icon name="x-mark" class="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-3">
+                            <span class="w-7 h-7 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-600 font-extrabold text-xs flex items-center justify-center shrink-0">١</span>
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed pt-1">
+                                لە سەرەوەی براوسەرەکەت (Chrome/Edge/Safari) کلیک لە ۳ خاڵەکە یان دوگمەی Menu بکە.
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-3">
+                            <span class="w-7 h-7 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-600 font-extrabold text-xs flex items-center justify-center shrink-0">٢</span>
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed pt-1">
+                                هەڵبژاردنی <strong>"Add to Home screen"</strong> (زیادکردن بۆ شاشەی سەرەکی) یان <strong>"Install app"</strong> بژێرە.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <x-button primary label="تێگەیشتم" @click="showInstallModal = false" class="w-full font-black py-2.5 shadow-md shadow-rose-600/25" />
+                    </div>
+                </div>
+            </div>
         </div>
 
         @livewireScripts
         @wireUiScripts
+
+        <script>
+            function handleInstallClick() {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('App Installed Successfully!');
+                        }
+                        window.deferredPrompt = null;
+                    });
+                    return false;
+                }
+                return true;
+            }
+
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error: ', err));
+                });
+            }
+        </script>
     </body>
 </html>
