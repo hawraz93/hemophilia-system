@@ -1,13 +1,20 @@
 <div class="space-y-8">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white">بەڕێوەبردنی بەکارهێنەران و Audit Log</h1>
-            <p class="text-xs text-slate-500 mt-1">زیادکردنی بەکارهێنەرانی سیستەم، دەسەڵاتەکان (ئەدمین، کارمەند، بینەر) و تۆماری گۆڕانکارییەکان</p>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white">بەڕێوەبردنی بەکارهێنەران، بەکئەپ و Audit Log</h1>
+            <p class="text-xs text-slate-500 mt-1">زیادکردنی بەکارهێنەرانی سیستەم، پاشەکەوتکردنی داتابەیس (Backup) و تۆماری گۆڕانکارییەکان</p>
         </div>
 
-        <x-button primary icon="user-plus" wire:click="openModal" class="font-bold">
-            زیادکردنی بەکارهێنەری نوێ
-        </x-button>
+        <div class="flex items-center gap-3">
+            <button wire:click="createBackup" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-md shadow-indigo-600/20">
+                <x-icon name="arrow-down-tray" class="w-4 h-4" />
+                <span>وەرگرتنی بەکئەپی داتابەیس (Backup)</span>
+            </button>
+
+            <x-button primary icon="user-plus" wire:click="openModal" class="font-bold">
+                زیادکردنی بەکارهێنەری نوێ
+            </x-button>
+        </div>
     </div>
 
     <!-- Users Grid -->
@@ -30,7 +37,7 @@
                 <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/80">
                     <div class="flex items-center gap-2">
                         <span class="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
-                            {{ $user->role->label() }}
+                            {{ $user->role?->label() }}
                         </span>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-md {{ $user->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-600' }}">
                             {{ $user->is_active ? 'چالاک' : 'ناچالاک' }}
@@ -53,6 +60,52 @@
                 </div>
             </div>
         @endforeach
+    </div>
+
+    <!-- Backup Manager Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <h3 class="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <x-icon name="circle-stack" class="w-5 h-5 text-indigo-600" />
+                <span>پاشەکەوتی داتابەیسەکان (Database Backups)</span>
+            </h3>
+
+            <button wire:click="createBackup" class="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 rounded-xl font-bold text-xs hover:bg-indigo-100 transition border border-indigo-200">
+                + دروستکردنی بەکئەپی نوێ
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-end text-sm">
+                <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 font-bold border-b">
+                    <tr>
+                        <th class="p-3">ناونیشانی فایلی بەکئەپ</th>
+                        <th class="p-3">بەرواری دروستکردن</th>
+                        <th class="p-3">قەبارەی فایل</th>
+                        <th class="p-3 text-center">داگرتن</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    @forelse($backupFiles as $file)
+                        <tr>
+                            <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">{{ $file['name'] }}</td>
+                            <td class="p-3 text-xs text-slate-500 font-mono">{{ $file['date'] }}</td>
+                            <td class="p-3 font-mono text-xs text-indigo-600 font-bold">{{ $file['size'] }}</td>
+                            <td class="p-3 text-center">
+                                <button wire:click="downloadBackup('{{ $file['name'] }}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1 shadow-2xs">
+                                    <x-icon name="arrow-down-tray" class="w-3.5 h-3.5" />
+                                    <span>داگرتن</span>
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="p-6 text-center text-slate-400 text-xs">هیچ فایلی بەکئەپێک دروست نەکراوە. دوگمەی "وەرگرتنی بەکئەپی داتابەیس" دابگرە.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Audit Logs Section -->
@@ -106,9 +159,9 @@
             <x-input type="email" wire:model="email" label="ئیمەیڵ *" placeholder="user@hemophilia.org" />
             <x-password wire:model="password" label="وشەی نهێنی (Password) *" />
             <x-native-select wire:model="role" label="دەسەڵاتی بەکارهێنەر">
-                <option value="admin">ئەدمین (دەسەڵاتی تەواو)</option>
-                <option value="staff">کارمەند (زیادکردن و نوێکردنەوە)</option>
-                <option value="viewer">بینەر (تەنها بینین)</option>
+                @foreach(\App\Enums\UserRole::cases() as $r)
+                    <option value="{{ $r->value }}">{{ $r->label() }}</option>
+                @endforeach
             </x-native-select>
         </div>
 

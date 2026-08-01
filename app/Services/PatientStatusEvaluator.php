@@ -22,13 +22,24 @@ class PatientStatusEvaluator
             $status = PatientListStatus::Red;
         } else {
             // 2. Check if essential fields are complete
-            $hasCompleteData = !empty($patient->phone) &&
+            $hasCompleteForm = !empty($patient->first_name) &&
+                !empty($patient->father_name) &&
+                !empty($patient->grandfather_name) &&
+                !empty($patient->phone) &&
                 !empty($patient->dob) &&
                 !empty($patient->blood_group) &&
                 !empty($patient->membership_number) &&
                 !empty($patient->national_id) &&
-                !empty($patient->hiwa_code) &&
                 !empty($patient->address);
+
+            // 3. Check if documents are uploaded
+            $hasUploadedDocuments = $patient->documents()->exists();
+
+            // 4. Check if membership payment has been made
+            $hasPaidMembership = $patient->membershipPayments()->exists();
+
+            // FULL MEMBER status is GREEN when Form + Documents + Payment are all satisfied
+            $hasCompleteData = $hasCompleteForm && $hasUploadedDocuments && $hasPaidMembership;
 
             $status = $hasCompleteData ? PatientListStatus::Green : PatientListStatus::Yellow;
         }

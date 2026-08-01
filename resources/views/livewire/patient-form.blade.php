@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <!-- Section 2: Identity & Code Info Card -->
+        <!-- Section 2: Identity, Membership & Party Affiliation Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xs">
             <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
@@ -81,18 +81,91 @@
                     <div>
                         <h3 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                             <x-icon name="identification" class="w-5 h-5 text-cyan-500" />
-                            <span>زانیاری ناسنامە و کۆدەکان (Identification & Membership)</span>
+                            <span>ناسنامە، ئەندامێتی و پەیوەندیداری (Membership & Affiliation)</span>
                         </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">کۆدی فەرمی نەخۆش، کۆدی هیوا و ژمارەی ئەندامێتی</p>
+                        <p class="text-xs text-slate-500 mt-0.5">ژمارەی ئەندامێتی، پلەی ئەندام لە ناو ڕێکخراو، کارتی دەنگدان و پەیوەندخوازە بە</p>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <x-input wire:model="patient_code" label="کۆدی نەخۆش (Patient Code)" readonly class="bg-slate-50 font-mono font-bold text-rose-600" />
                 <x-input wire:model="hiwa_code" label="کۆدی نەخۆشخانەی هیوا" placeholder="HW-1234" />
                 <x-input wire:model="membership_number" label="ژمارەی ئەندامێتی کۆمەڵە" placeholder="MEM-101" />
-                <x-input wire:model="national_id" label="ژمارەی نیشتمانی / ناسنامە" placeholder="1995XXXXXXXX" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
+                <!-- Membership Type Dropdown -->
+                <x-native-select wire:model="membership_type" label="پلەی ئەندامێتی لە ناو ڕێکخراوەکە (جۆری ئەندامبوون) *">
+                    @foreach(\App\Enums\MembershipType::cases() as $type)
+                        <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                    @endforeach
+                </x-native-select>
+
+                <!-- Custom Alpine Visual Colored Select for Party Affiliation -->
+                <div x-data="{ open: false, selected: @entangle('party_affiliation') }" class="relative">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                        پەیوەندخوازە بە (پابەندی حیزبی) *
+                    </label>
+
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-right shadow-2xs font-extrabold text-xs min-h-[42px]">
+                        <template x-if="selected == 'green'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500 inline-block shadow-xs border border-emerald-600"></span><span class="text-emerald-700 dark:text-emerald-400 font-black">سەوز</span></span>
+                        </template>
+                        <template x-if="selected == 'yellow'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-400 inline-block shadow-xs border border-amber-500"></span><span class="text-amber-700 dark:text-amber-300 font-black">زەرد</span></span>
+                        </template>
+                        <template x-if="selected == 'orange'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-orange-500 inline-block shadow-xs border border-orange-600"></span><span class="text-orange-700 dark:text-orange-400 font-black">پرتەقاڵی</span></span>
+                        </template>
+                        <template x-if="selected == 'brown'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-900 inline-block shadow-xs border border-amber-950"></span><span class="text-amber-900 dark:text-amber-300 font-black">قاوەیی</span></span>
+                        </template>
+                        <template x-if="selected == 'light'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-cyan-400 inline-block shadow-xs border border-cyan-500"></span><span class="text-cyan-700 dark:text-cyan-300 font-black">ڕووناکی</span></span>
+                        </template>
+                        <template x-if="selected == 'white'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-white border border-slate-400 inline-block shadow-xs"></span><span class="text-slate-800 dark:text-slate-200 font-black">سپی</span></span>
+                        </template>
+                        <template x-if="selected == 'grey'">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-slate-500 inline-block shadow-xs border border-slate-600"></span><span class="text-slate-600 dark:text-slate-400 font-black">خۆلەمێشی</span></span>
+                        </template>
+                        <template x-if="!selected">
+                            <span class="text-slate-400 font-medium">دیاری نەکراوە</span>
+                        </template>
+                        <x-icon name="chevron-down" class="w-4 h-4 text-slate-400 shrink-0" />
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-0 mt-1 w-full z-40 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-2 space-y-1" style="display: none;">
+                        <button type="button" @click="selected = ''; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold flex items-center justify-between">
+                            <span class="text-slate-400">دیاری نەکراوە</span>
+                        </button>
+                        <button type="button" @click="selected = 'green'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-xs font-black flex items-center justify-between text-emerald-700 dark:text-emerald-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500 shadow-xs border border-emerald-600"></span> سەوز</span>
+                        </button>
+                        <button type="button" @click="selected = 'yellow'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-950/50 text-xs font-black flex items-center justify-between text-amber-700 dark:text-amber-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-400 shadow-xs border border-amber-500"></span> زەرد</span>
+                        </button>
+                        <button type="button" @click="selected = 'orange'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/50 text-xs font-black flex items-center justify-between text-orange-700 dark:text-orange-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-orange-500 shadow-xs border border-orange-600"></span> پرتەقاڵی</span>
+                        </button>
+                        <button type="button" @click="selected = 'brown'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-amber-900/10 text-xs font-black flex items-center justify-between text-amber-900 dark:text-amber-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-900 shadow-xs border border-amber-950"></span> قاوەیی</span>
+                        </button>
+                        <button type="button" @click="selected = 'light'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-950/50 text-xs font-black flex items-center justify-between text-cyan-700 dark:text-cyan-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-cyan-400 shadow-xs border border-cyan-500"></span> ڕووناکی</span>
+                        </button>
+                        <button type="button" @click="selected = 'white'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-black flex items-center justify-between text-slate-800 dark:text-slate-100">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-white shadow-xs border border-slate-400"></span> سپی</span>
+                        </button>
+                        <button type="button" @click="selected = 'grey'; open = false" class="w-full text-right p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-black flex items-center justify-between text-slate-600 dark:text-slate-300">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-slate-500 shadow-xs border border-slate-600"></span> خۆلەمێشی</span>
+                        </button>
+                    </div>
+                </div>
+
+                <x-input wire:model="national_id" label="ژمارەی کارتی نیشتمانی / ناسنامە" placeholder="1995XXXXXXXX" />
+                <x-input wire:model="voting_card_number" label="ژمارەی کارتی دەنگدان" placeholder="VOTE-987654" />
             </div>
         </div>
 
@@ -112,10 +185,10 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-5">
-                <x-native-select wire:model="hemophilia_type" label="جۆری هیمۆفیلیا *">
-                    <option value="A">هیمۆفیلیا A</option>
-                    <option value="B">هیمۆفیلیا B</option>
-                    <option value="other">جۆری تر</option>
+                <x-native-select wire:model="hemophilia_type" label="جۆری نەخۆشی (هیمۆفیلیا) *">
+                    @foreach(\App\Enums\HemophiliaType::cases() as $ht)
+                        <option value="{{ $ht->value }}">{{ $ht->label() }}</option>
+                    @endforeach
                 </x-native-select>
 
                 <x-native-select wire:model="severity" label="پلەی نەخۆشی">

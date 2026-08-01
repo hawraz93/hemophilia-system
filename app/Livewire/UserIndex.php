@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
@@ -93,11 +95,41 @@ class UserIndex extends Component
         session()->flash('message', 'وشەی نهێنی بەکارهێنەر بە سەرکەوتوویی گۆڕدرا.');
     }
 
+    public function createBackup()
+    {
+        Artisan::call('app:backup-database');
+        session()->flash('message', 'بەکئەپی نوێی داتابەیس بە سەرکەوتوویی دروستکرا.');
+    }
+
+    public function downloadBackup(string $filename)
+    {
+        $path = storage_path('app/backups/' . basename($filename));
+        if (File::exists($path)) {
+            return response()->download($path);
+        }
+        session()->flash('error', 'فایلی بەکئەپ نەدۆزرایەوە.');
+    }
+
     public function render()
     {
         $users = User::all();
         $auditLogs = AuditLog::with('user')->latest()->take(30)->get();
 
-        return view('livewire.user-index', compact('users', 'auditLogs'));
+        $backupFiles = [];
+        $backupDir = storage_path('app/backups');
+        if (File::exists($backupDir)) {
+            $files = File::files($backupDir);
+            foreach ($files as $file) {
+                $backupFiles[] = [
+                    'name' => $file->getFilename(),
+                    'size' => round($file->getSize() / 1024, 2) . ' KB',
+                    'date' => date('Y-m-d H:i:s', $file->getMTime()),
+                ];
+            }
+            // Sort latest first
+            usort($backupFiles, fn($a, $b) => strcmp($b['date'], $a['date']));
+        }
+
+        return view('livewire.user-index', compact('users', 'auditLogs', 'backupFiles'));
     }
 }

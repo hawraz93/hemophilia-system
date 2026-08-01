@@ -36,14 +36,24 @@ class User extends Authenticatable
         ];
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === UserRole::SuperAdmin;
+    }
+
+    public function isOrgHead(): bool
+    {
+        return $this->role === UserRole::OrgHead || $this->isSuperAdmin();
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::Admin;
+        return in_array($this->role, [UserRole::SuperAdmin, UserRole::OrgHead, UserRole::Admin]);
     }
 
     public function isStaff(): bool
     {
-        return $this->role === UserRole::Staff || $this->isAdmin();
+        return in_array($this->role, [UserRole::SuperAdmin, UserRole::OrgHead, UserRole::Admin, UserRole::Staff]);
     }
 
     public function isViewer(): bool

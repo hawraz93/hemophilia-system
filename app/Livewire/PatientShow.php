@@ -74,6 +74,11 @@ class PatientShow extends Component
     public string $pay_receipt = '';
     public string $pay_notes = '';
 
+    // Support Letter Customization Modal
+    public bool $showSupportModal = false;
+    public string $letter_recipient = 'سەرجەم لایەنە پەیوەندیدارەکان';
+    public string $letter_subject = 'نوسراوی پشتگیری';
+
     public function mount(Patient $patient)
     {
         $this->patient = $patient;
@@ -111,6 +116,9 @@ class PatientShow extends Component
         $this->doc_title = '';
         $this->doc_file = null;
         $this->patient->refresh();
+
+        PatientStatusEvaluator::evaluate($this->patient);
+
         session()->flash('message', 'بەڵگەنامە بە سەرکەوتوویی بارکرا.');
     }
 
@@ -129,6 +137,8 @@ class PatientShow extends Component
         AuditLoggerService::log('document_deleted', $this->patient);
 
         $this->patient->refresh();
+        PatientStatusEvaluator::evaluate($this->patient);
+
         session()->flash('message', 'بەڵگەنامەکە بە سەرکەوتوویی سڕدرایەوە.');
     }
 
@@ -274,6 +284,9 @@ class PatientShow extends Component
 
         $this->showPaymentModal = false;
         $this->patient->refresh();
+
+        PatientStatusEvaluator::evaluate($this->patient);
+
         session()->flash('message', 'رسوماتی ئەندامێتی پاشەکەوت کرا.');
     }
 

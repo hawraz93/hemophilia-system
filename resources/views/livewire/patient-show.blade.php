@@ -6,12 +6,27 @@
                 {{ mb_substr($patient->first_name, 0, 1) }}
             </div>
             <div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ $patient->full_name }}</h1>
                     <x-badge :color="$patient->list_status->color()" :label="$patient->list_status->label()" />
+
+                    @if($patient->membership_type)
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200">
+                            {{ $patient->membership_type->label() }}
+                        </span>
+                    @endif
+
+                    @if($patient->party_affiliation)
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold border {{ $patient->party_affiliation->badgeClasses() }}">
+                            پەیوەندخواز بە: {{ $patient->party_affiliation->label() }}
+                        </span>
+                    @endif
                 </div>
-                <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500 mt-1">
+
+                <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500 mt-2">
                     <span>کۆد: <code class="font-mono text-slate-800 dark:text-slate-200 font-bold">{{ $patient->patient_code }}</code></span>
+                    <span>•</span>
+                    <span>ژ. ئەندامێتی: <strong class="text-slate-800 dark:text-slate-200 font-mono">{{ $patient->membership_number ?? '—' }}</strong></span>
                     <span>•</span>
                     <span>کۆدی هیوا: <strong class="text-slate-800 dark:text-slate-200">{{ $patient->hiwa_code ?? 'دیاری نەکراوە' }}</strong></span>
                     <span>•</span>
@@ -47,17 +62,56 @@
                 <span>پرینتکردنی ڕاپۆرتی گشتی</span>
             </a>
 
-            @if($patient->list_status->value === 'green')
-                <a href="{{ route('patients.support-letter', $patient) }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition flex items-center gap-1.5 shadow">
-                    <x-icon name="document-text" class="w-4 h-4" />
-                    <span>دروستکردنی پشتیگیری (نوسراو)</span>
-                </a>
-            @endif
+            <!-- Support Letter Customization Button -->
+            <button wire:click="$set('showSupportModal', true)" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition flex items-center gap-1.5 shadow">
+                <x-icon name="document-text" class="w-4 h-4" />
+                <span>دروستکردنی پشتگیری (نووسراو)</span>
+            </button>
 
             <a href="{{ route('patients.id-card', $patient) }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition flex items-center gap-1.5 shadow">
                 <x-icon name="identification" class="w-4 h-4" />
                 <span>دروستکردنی کارتی ناسنامە</span>
             </a>
+        </div>
+    </div>
+
+    <!-- Completeness Status Alert Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            @if($patient->list_status->value === 'green')
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center font-black">
+                    <x-icon name="check-circle" class="w-6 h-6" />
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">ئەندامی تەواو (دۆخی سەوز)</h3>
+                    <p class="text-xs text-slate-500">سەرجەم فۆڕم، بەڵگەنامەکان و رسوماتی ئەندامێتی بە تەواوی تۆمارکراون.</p>
+                </div>
+            @else
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center font-black">
+                    <x-icon name="exclamation-triangle" class="w-6 h-6" />
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-amber-600 dark:text-amber-400">پڕۆفایلی ناتەواو (دۆخی زەرد / سوور)</h3>
+                    <p class="text-xs text-slate-500">پێویستە فۆڕم، بەڵگەنامەکان و رسوماتی ئەندامێتی پڕبکرێنەوە بۆ سەوزبوون.</p>
+                </div>
+            @endif
+        </div>
+
+        <div class="flex items-center gap-3 text-xs font-bold">
+            <span class="flex items-center gap-1 {{ !empty($patient->phone) && !empty($patient->national_id) ? 'text-emerald-600' : 'text-slate-400' }}">
+                <x-icon name="{{ !empty($patient->phone) && !empty($patient->national_id) ? 'check' : 'x-mark' }}" class="w-4 h-4" />
+                زانیاری فۆڕم
+            </span>
+            <span>•</span>
+            <span class="flex items-center gap-1 {{ $patient->documents->count() > 0 ? 'text-emerald-600' : 'text-slate-400' }}">
+                <x-icon name="{{ $patient->documents->count() > 0 ? 'check' : 'x-mark' }}" class="w-4 h-4" />
+                بەڵگەنامەکان ({{ $patient->documents->count() }})
+            </span>
+            <span>•</span>
+            <span class="flex items-center gap-1 {{ $patient->membershipPayments->count() > 0 ? 'text-emerald-600' : 'text-slate-400' }}">
+                <x-icon name="{{ $patient->membershipPayments->count() > 0 ? 'check' : 'x-mark' }}" class="w-4 h-4" />
+                رسوماتی ئەندامێتی
+            </span>
         </div>
     </div>
 
@@ -105,7 +159,7 @@
             <div class="p-6 space-y-6">
                 <!-- Personal Info Grid -->
                 <div>
-                    <h3 class="text-sm font-extrabold text-red-600 border-b pb-2 mb-4">زانیاری کەسی و ناونیشان</h3>
+                    <h3 class="text-sm font-extrabold text-red-600 border-b pb-2 mb-4">زانیاری کەسی و ناسنامە</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                         <div>
                             <span class="text-xs text-slate-400 block font-bold">ناوی ناوخۆیی</span>
@@ -120,8 +174,26 @@
                             <strong class="text-slate-800 dark:text-white">{{ $patient->grandfather_name }}</strong>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 block font-bold">ڕەگەز</span>
-                            <strong class="text-slate-800 dark:text-white">{{ $patient->gender?->label() }}</strong>
+                            <span class="text-xs text-slate-400 block font-bold">پلەی ئەندامێتی لە ناو ڕێکخراو</span>
+                            <strong class="text-indigo-600 font-extrabold">{{ $patient->membership_type?->label() ?? 'ئەندامی ئاسایی' }}</strong>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 block font-bold">پەیوەندخوازە بە (حیزبی)</span>
+                            @if($patient->party_affiliation)
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold border inline-block mt-0.5 {{ $patient->party_affiliation->badgeClasses() }}">
+                                    {{ $patient->party_affiliation->label() }}
+                                </span>
+                            @else
+                                <strong class="text-slate-400">دیاری نەکراوە</strong>
+                            @endif
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 block font-bold">ژمارەی کارتی نیشتمانی</span>
+                            <strong class="text-slate-800 dark:text-white font-mono">{{ $patient->national_id ?? '—' }}</strong>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 block font-bold">ژمارەی کارتی دەنگدان</span>
+                            <strong class="text-slate-800 dark:text-white font-mono">{{ $patient->voting_card_number ?? '—' }}</strong>
                         </div>
                         <div>
                             <span class="text-xs text-slate-400 block font-bold">بەرواری لەدایکبوون</span>
@@ -147,7 +219,7 @@
                     <h3 class="text-sm font-extrabold text-red-600 border-b pb-2 mb-4">زانیاری تەندروستی و پزیشکی</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                         <div>
-                            <span class="text-xs text-slate-400 block font-bold">جۆری هیمۆفیلیا</span>
+                            <span class="text-xs text-slate-400 block font-bold">جۆری نەخۆشی</span>
                             <strong class="text-red-600 dark:text-red-400 font-extrabold">{{ $patient->hemophilia_type?->label() }}</strong>
                         </div>
                         <div>
@@ -176,130 +248,100 @@
                         </div>
                     </div>
                 </div>
-
-                @if($patient->medical_notes)
-                    <div>
-                        <h4 class="text-xs font-bold text-slate-500 mb-1">تێبینی پزیشکی:</h4>
-                        <p class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl text-sm text-slate-700 dark:text-slate-300">
-                            {{ $patient->medical_notes }}
-                        </p>
-                    </div>
-                @endif
             </div>
         @endif
 
-        <!-- Tab 2: Documents -->
+        <!-- Tab 2: Documents with Gallery & Lightbox Viewer -->
         @if($activeTab === 'docs')
             <div class="p-6 space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-700/80 pb-4">
+                <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="font-black text-slate-900 dark:text-white text-base">بەڵگەنامە و فایلە بارکراوەکان</h3>
-                        <p class="text-xs text-slate-400">کاتی بارکردن و پۆلێنکردنی فایلی نەخۆش بەپێی جۆر</p>
+                        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">بەڵگەنامەکانی بارکراو (Documents Gallery)</h3>
+                        <p class="text-xs text-slate-500">کارتی نیشتمانی، کارتی دەنگدان، ڕاپۆرتی پزیشکی و فۆتۆکان</p>
                     </div>
 
                     @if(!auth()->user()->isViewer())
-                        <x-button primary icon="cloud-arrow-up" wire:click="$set('showDocModal', true)" label="بارکردنی بەڵگەنامە" class="font-extrabold shadow-md shadow-rose-600/25" />
+                        <x-button primary wire:click="$set('showDocModal', true)" icon="arrow-up-tray" label="بارکردنی بەڵگەنامەی نوێ" class="font-bold shadow-md shadow-rose-600/20" />
                     @endif
                 </div>
 
-                <!-- Category Filter Pills -->
-                <div x-data="{ docFilter: 'all' }" class="space-y-6">
-                    <div class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                        <button @click="docFilter = 'all'" :class="docFilter === 'all' ? 'bg-slate-900 text-white dark:bg-rose-600 shadow-xs' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2">
-                            <span>هەموو بەڵگەنامەکان</span>
-                            <span class="px-1.5 py-0.5 rounded-md text-[10px] bg-white/20">{{ $patient->documents->count() }}</span>
-                        </button>
-                        <button @click="docFilter = 'identity'" :class="docFilter === 'identity' ? 'bg-slate-900 text-white dark:bg-rose-600 shadow-xs' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2">
-                            <span>🆔 ناسنامە و کارتی نیشتمانی</span>
-                            <span class="px-1.5 py-0.5 rounded-md text-[10px] bg-white/20">{{ $patient->documents->filter(fn($d) => in_array($d->document_type->value, ['national_card', 'id_card']))->count() }}</span>
-                        </button>
-                        <button @click="docFilter = 'medical'" :class="docFilter === 'medical' ? 'bg-slate-900 text-white dark:bg-rose-600 shadow-xs' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2">
-                            <span>📋 ڕاپۆرتی پزیشکی و تاقیکردنەوە</span>
-                            <span class="px-1.5 py-0.5 rounded-md text-[10px] bg-white/20">{{ $patient->documents->filter(fn($d) => in_array($d->document_type->value, ['medical_report', 'lab_result']))->count() }}</span>
-                        </button>
-                        <button @click="docFilter = 'photo'" :class="docFilter === 'photo' ? 'bg-slate-900 text-white dark:bg-rose-600 shadow-xs' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2">
-                            <span>🖼️ وێنەی نەخۆش</span>
-                            <span class="px-1.5 py-0.5 rounded-md text-[10px] bg-white/20">{{ $patient->documents->filter(fn($d) => $d->document_type->value === 'patient_photo')->count() }}</span>
-                        </button>
-                    </div>
-
-                    <!-- Documents Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @forelse($patient->documents as $doc)
-                            @php
-                                $typeVal = $doc->document_type->value;
-                                $group = match($typeVal) {
-                                    'national_card', 'id_card' => 'identity',
-                                    'medical_report', 'lab_result' => 'medical',
-                                    'patient_photo' => 'photo',
-                                    default => 'other',
-                                };
-                                $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
-                                $isImage = Str::startsWith($doc->mime_type ?? '', 'image/') || in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                            @endphp
-                            <div x-show="docFilter === 'all' || docFilter === '{{ $group }}'" x-transition class="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 space-y-3 shadow-2xs hover:shadow-md transition">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[11px] font-black px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80">
-                                        {{ $doc->document_type->label() }}
-                                    </span>
-                                    <span class="text-[10px] text-slate-400 font-mono font-bold">{{ round($doc->file_size / 1024) }} KB</span>
-                                </div>
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    @forelse($patient->documents as $doc)
+                        @php
+                            $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
+                            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
+                        @endphp
+                        <div x-data="{ hovered: false }" @mouseenter="hovered = true" @mouseleave="hovered = false" class="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition">
+                            <div class="relative w-full h-40 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-700 group">
                                 @if($isImage)
-                                    <div class="h-36 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 group relative">
-                                        <img src="{{ asset('storage/' . $doc->file_path) }}" alt="{{ $doc->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200" />
-                                        <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1.5">
-                                            <x-icon name="eye" class="w-4 h-4" />
-                                            <span>پیشاندانی تەواو</span>
-                                        </a>
-                                    </div>
+                                    <img src="{{ Storage::url($doc->file_path) }}" alt="{{ $doc->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                                 @else
-                                    <div class="h-24 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-center gap-3 text-slate-500">
-                                        <x-icon name="document-text" class="w-8 h-8 text-rose-500" />
-                                        <div>
-                                            <p class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 uppercase">{{ $ext ?: 'FILE' }}</p>
-                                            <p class="text-[10px] text-slate-400">فایلی ڕەسمی</p>
-                                        </div>
+                                    <div class="flex flex-col items-center gap-2 text-rose-600">
+                                        <x-icon name="document-text" class="w-12 h-12" />
+                                        <span class="font-mono text-xs uppercase font-extrabold">{{ $ext }}</span>
                                     </div>
                                 @endif
 
-                                <div>
-                                    <h4 class="font-extrabold text-slate-900 dark:text-white text-sm truncate">{{ $doc->title }}</h4>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">بەرواری بارکردن: {{ $doc->created_at->format('Y-m-d') }}</p>
-                                </div>
+                                <!-- Overlay Hover Buttons -->
+                                <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <button 
+                                        @click="$dispatch('open-lightbox', { title: '{{ $doc->title }}', type: '{{ $doc->document_type?->label() }}', url: '{{ Storage::url($doc->file_path) }}', isImage: {{ $isImage ? 'true' : 'false' }}, printUrl: '{{ route('patient-documents.print', $doc) }}', downloadUrl: '{{ route('patient-documents.download', $doc) }}' })" 
+                                        class="p-2.5 rounded-xl bg-white text-slate-900 font-bold hover:bg-rose-600 hover:text-white transition shadow" 
+                                        title="بینین و گەورەکردنەوە (Fullscreen Lightbox)"
+                                    >
+                                        <x-icon name="magnifying-glass-plus" class="w-5 h-5" />
+                                    </button>
 
-                                <div class="pt-2 border-t border-slate-100 dark:border-slate-700/80 flex items-center justify-between">
-                                    <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="text-xs font-extrabold text-rose-600 hover:text-rose-700 flex items-center gap-1">
-                                        <x-icon name="arrow-down-tray" class="w-4 h-4" />
-                                        <span>بینیین / داگرتن</span>
+                                    <a href="{{ route('patient-documents.download', $doc) }}" class="p-2.5 rounded-xl bg-white text-slate-900 font-bold hover:bg-emerald-600 hover:text-white transition shadow" title="داگرتن">
+                                        <x-icon name="arrow-down-tray" class="w-5 h-5" />
                                     </a>
 
-                                    @if(!auth()->user()->isViewer())
-                                        <button wire:click="deleteDocument({{ $doc->id }})" wire:confirm="دڵنیایت لە سڕینەوەی ئەم بەڵگەنامەیە؟" class="text-slate-400 hover:text-rose-600 transition p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40" title="سڕینەوەی بەڵگەنامە">
-                                            <x-icon name="trash" class="w-4 h-4" />
-                                        </button>
-                                    @endif
+                                    <a href="{{ route('patient-documents.print', $doc) }}" target="_blank" class="p-2.5 rounded-xl bg-white text-slate-900 font-bold hover:bg-indigo-600 hover:text-white transition shadow" title="چاپکردن">
+                                        <x-icon name="printer" class="w-5 h-5" />
+                                    </a>
                                 </div>
                             </div>
-                        @empty
-                            <div class="col-span-full text-center py-12 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                                <x-icon name="document-text" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                                <p class="text-xs font-bold text-slate-500">هیچ بەڵگەنامەیەک بارنەکراوە.</p>
-                                <p class="text-[10px] text-slate-400 mt-1">تکایە دوگمەی "بارکردنی بەڵگەنامە" بەکاربهێنە بۆ زیادکردنی ناسنامە و ڕاپۆرتی پزیشکی</p>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">{{ $doc->title }}</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold">
+                                        {{ $doc->document_type?->label() }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                                    <span>{{ $doc->created_at->format('Y-m-d') }}</span>
+                                    <span>{{ round($doc->file_size / 1024, 1) }} KB</span>
+                                </div>
                             </div>
-                        @endforelse
-                    </div>
+
+                            @if(!auth()->user()->isViewer())
+                                <div class="pt-2 border-t border-slate-200 dark:border-slate-700/80 flex justify-end">
+                                    <button wire:click="deleteDocument({{ $doc->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم بەڵگەنامەیە؟" class="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1">
+                                        <x-icon name="trash" class="w-3.5 h-3.5" />
+                                        <span>سڕینەوە</span>
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                            <x-icon name="paper-clip" class="w-12 h-12 text-slate-400 mx-auto mb-2" />
+                            <p class="text-sm font-bold text-slate-500">هیچ بەڵگەنامەیەک بار نەکراوە.</p>
+                            <p class="text-xs text-slate-400 mt-1">بەڵگەنامەکانی کارتی نیشتمانی، کارتی دەنگدان یان فۆتۆ بار بکە.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         @endif
 
-        <!-- Tab 3: Assistance -->
+        <!-- Tab 3: Assistances Log -->
         @if($activeTab === 'aid')
             <div class="p-6 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-extrabold text-slate-900 dark:text-white text-base">مێژووی هاوکاری و یارمەتییەکان</h3>
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">مێژووی هاوکاری و یارمەتییە وەرگیراوەکان</h3>
                     @if(!auth()->user()->isViewer())
-                        <x-button sm primary icon="plus" wire:click="$set('showAidModal', true)" label="تۆمارکردنی هاوکاری نوێ" />
+                        <x-button primary wire:click="$set('showAidModal', true)" icon="plus" label="تۆمارکردنی هاوکاری نوێ" class="font-bold" />
                     @endif
                 </div>
 
@@ -310,24 +352,24 @@
                                 <th class="p-3">ژمارەی هاوکاری</th>
                                 <th class="p-3">بەروار</th>
                                 <th class="p-3">جۆری هاوکاری</th>
-                                <th class="p-3">سەرچاوەی هاوکاری</th>
-                                <th class="p-3">بڕی پارە (IQD)</th>
+                                <th class="p-3">سەرچاوە / دابینکەر</th>
+                                <th class="p-3">بڕی دراو (IQD)</th>
                                 <th class="p-3">تێبینی</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                             @forelse($patient->assistances as $aid)
                                 <tr>
-                                    <td class="p-3 font-mono font-bold text-slate-600 dark:text-slate-300">{{ $aid->assistance_number }}</td>
-                                    <td class="p-3 text-slate-600 dark:text-slate-400">{{ $aid->assistance_date->format('Y-m-d') }}</td>
-                                    <td class="p-3 font-bold text-slate-800 dark:text-white">{{ $aid->category->label() }}</td>
-                                    <td class="p-3 text-slate-600 dark:text-slate-300">{{ $aid->source_funder ?? '—' }}</td>
+                                    <td class="p-3 font-mono font-bold">{{ $aid->assistance_number }}</td>
+                                    <td class="p-3 text-slate-500">{{ $aid->assistance_date->format('Y-m-d') }}</td>
+                                    <td class="p-3 font-bold">{{ $aid->category->label() }}</td>
+                                    <td class="p-3">{{ $aid->source_funder ?? '—' }}</td>
                                     <td class="p-3 font-black text-emerald-600">{{ number_format($aid->amount) }}</td>
                                     <td class="p-3 text-xs text-slate-500">{{ $aid->notes ?? '—' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ هاوکارییەک تائێستا تۆمار نەکراوە.</td>
+                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ هاوکارییەک تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -336,17 +378,13 @@
             </div>
         @endif
 
-        <!-- Tab 4: Membership -->
+        <!-- Tab 4: Memberships -->
         @if($activeTab === 'membership')
-            <div class="p-6 space-y-6">
+            <div class="p-6 space-y-4">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 dark:text-white text-base">دۆخی ئەندامێتی و مێژووی رسومات</h3>
-                        <p class="text-xs text-slate-400">ژمارەی ئەندامێتی: <strong class="text-slate-800 dark:text-white font-mono">{{ $patient->membership_number ?? 'نادیار' }}</strong></p>
-                    </div>
-
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">تۆماری ئەندامێتی و وەسڵەکانی پارەدان</h3>
                     @if(!auth()->user()->isViewer())
-                        <x-button sm primary icon="plus" wire:click="$set('showPaymentModal', true)" label="تۆمارکردنی پادانی ئەندامێتی" />
+                        <x-button primary wire:click="$set('showPaymentModal', true)" icon="plus" label="تۆمارکردنی وەسلێک" class="font-bold" />
                     @endif
                 </div>
 
@@ -356,21 +394,21 @@
                             <tr>
                                 <th class="p-3">بەرواری پارەدان</th>
                                 <th class="p-3">ژمارەی وەسڵ</th>
-                                <th class="p-3">بڕی دراو (IQD)</th>
+                                <th class="p-3">بڕی دانراو (IQD)</th>
                                 <th class="p-3">تێبینی</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                             @forelse($patient->membershipPayments as $pay)
                                 <tr>
-                                    <td class="p-3 text-slate-600 font-bold dark:text-slate-300">{{ $pay->payment_date->format('Y-m-d') }}</td>
-                                    <td class="p-3 font-mono font-bold text-slate-600 dark:text-slate-300">{{ $pay->receipt_number ?? '—' }}</td>
+                                    <td class="p-3 font-mono">{{ $pay->payment_date->format('Y-m-d') }}</td>
+                                    <td class="p-3 font-mono font-bold">{{ $pay->receipt_number ?? '—' }}</td>
                                     <td class="p-3 font-black text-emerald-600">{{ number_format($pay->amount_paid) }}</td>
                                     <td class="p-3 text-xs text-slate-500">{{ $pay->notes ?? '—' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="p-8 text-center text-slate-400">هیچ پارەدانێک تۆمارنەکراوە.</td>
+                                    <td colspan="4" class="p-8 text-center text-slate-400">هیچ رسوماتێکی ئەندامێتی تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -378,256 +416,166 @@
                 </div>
             </div>
         @endif
-
-        <!-- Tab 5: Medical Logs -->
-        @if($activeTab === 'medical')
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-extrabold text-slate-900 dark:text-white text-base">تۆماری چاودێری پزیشکی و سەردانەکان</h3>
-                    @if(!auth()->user()->isViewer())
-                        <x-button sm primary icon="plus" wire:click="$set('showMedicalModal', true)" label="زیادکردنی تۆماری پزیشکی" />
-                    @endif
-                </div>
-
-                <div class="space-y-3">
-                    @forelse($patient->medicalLogs as $log)
-                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40 space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-red-600 text-sm">{{ $log->log_type->label() }}</span>
-                                <span class="text-xs text-slate-400">{{ $log->log_date->format('Y-m-d') }}</span>
-                            </div>
-                            @if($log->hospital_name)
-                                <p class="text-xs text-slate-600 font-bold">نەخۆشخانە: {{ $log->hospital_name }}</p>
-                            @endif
-                            @if($log->factor_name_dose)
-                                <p class="text-xs text-slate-600 font-bold">Factor: {{ $log->factor_name_dose }}</p>
-                            @endif
-                            @if($log->details)
-                                <p class="text-sm text-slate-700 dark:text-slate-300 pt-1">{{ $log->details }}</p>
-                            @endif
-                        </div>
-                    @empty
-                        <div class="text-center py-8 text-slate-400">هیچ تۆمارێکی پزیشکی نییە.</div>
-                    @endforelse
-                </div>
-            </div>
-        @endif
-
-        <!-- Tab 6: Contacts -->
-        @if($activeTab === 'contacts')
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-extrabold text-slate-900 dark:text-white text-base">تۆماری بەدواداچوون و پەیوەندییەکان</h3>
-                    @if(!auth()->user()->isViewer())
-                        <x-button sm primary icon="plus" wire:click="$set('showContactModal', true)" label="زیادکردنی تێبینی پەیوەندی" />
-                    @endif
-                </div>
-
-                <div class="space-y-3">
-                    @forelse($patient->contacts as $contact)
-                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40 flex items-start justify-between">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-900 dark:text-white text-sm">{{ $contact->channel->label() }}</span>
-                                    <span class="text-xs px-2 py-0.5 rounded font-bold {{ $contact->is_successful ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                        {{ $contact->is_successful ? 'سەرکەوتوو' : 'بێوەڵام' }}
-                                    </span>
-                                </div>
-                                <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">{{ $contact->outcome_notes }}</p>
-                            </div>
-                            <span class="text-xs text-slate-400">{{ $contact->contact_date->format('Y-m-d') }}</span>
-                        </div>
-                    @empty
-                        <div class="text-center py-8 text-slate-400">هیچ پەیوەندییەک تۆمارنەکراوە.</div>
-                    @endforelse
-                </div>
-            </div>
-        @endif
-
-        <!-- Tab 7: Activity Logs -->
-        @if($activeTab === 'logs')
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 dark:text-white text-base">مێژووی چالاکی و گۆڕانکارییەکان</h3>
-                        <p class="text-xs text-slate-400">تۆماری گشت چالاکییەکانی بەکارهێنەران لەسەر پرۆفایلی ئەم نەخۆشە</p>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    @forelse($patient->auditLogs as $log)
-                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40 flex items-start justify-between">
-                            <div class="flex items-start gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 flex items-center justify-center font-bold shrink-0">
-                                    <x-icon name="clock" class="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-slate-900 dark:text-white text-sm">{{ $log->user?->name ?? 'سیستەم' }}</span>
-                                        <span class="text-xs px-2.5 py-0.5 rounded-md font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
-                                            {{ $log->event }}
-                                        </span>
-                                    </div>
-                                    <p class="text-xs text-slate-500 mt-1">IP Address: <code class="font-mono text-slate-700 dark:text-slate-300">{{ $log->ip_address ?? '—' }}</code></p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-slate-400 font-mono font-bold">{{ $log->created_at->format('Y-m-d H:i') }}</span>
-                        </div>
-                    @empty
-                        <div class="text-center py-8 text-slate-400">هیچ تۆمارێکی چالاکی نییە.</div>
-                    @endforelse
-                </div>
-            </div>
-        @endif
     </div>
 
-    <!-- Document Modal -->
-    <x-modal-card title="بارکردنی بەڵگەنامە" wire:model="showDocModal" max-width="lg">
-        <div class="space-y-4">
-            <x-input wire:model="doc_title" label="سەردێڕی بەڵگەنامە *" placeholder="ناوی فایلی بەڵگەنامەکە (بۆ نموونە: ناسنامە / وێنە)" />
-            
+    <!-- Upload Document Modal with Live Loading Progress -->
+    <x-modal-card title="بارکردنی بەڵگەنامەی نوێ" wire:model="showDocModal" max-width="md">
+        <form wire:submit="uploadDocument" class="space-y-4">
+            <x-input wire:model="doc_title" label="ناوی بەڵگەنامە *" placeholder="کارتی نیشتمانی، ڕاپۆرتی پزیشکی..." />
+
             <x-native-select wire:model="doc_type" label="جۆری بەڵگەنامە *">
-                <option value="national_card">🆔 کارتی نیشتمانی</option>
-                <option value="id_card">🎴 ناسنامەی شارستانی</option>
-                <option value="medical_report">📋 ڕاپۆرتی پزیشکی</option>
-                <option value="lab_result">🧪 ئەنجامی تاقیکردنەوە</option>
-                <option value="patient_photo">🖼️ وێنەی نەخۆش</option>
-                <option value="other">📁 بەڵگەنامەی تر</option>
+                @foreach(\App\Enums\DocumentType::cases() as $dt)
+                    <option value="{{ $dt->value }}">{{ $dt->label() }}</option>
+                @endforeach
             </x-native-select>
 
-            <!-- Custom File Dropzone & Livewire Loading -->
             <div class="space-y-2">
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">فایلی بەڵگەنامە *</label>
-                
-                <div class="relative border-2 border-dashed border-rose-300 dark:border-rose-800 hover:border-rose-500 bg-rose-50/20 dark:bg-rose-950/20 rounded-2xl p-6 text-center transition cursor-pointer group">
-                    <input type="file" wire:model="doc_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200">فایلی بەڵگەنامە (وێنە یان PDF) *</label>
+                <input type="file" wire:model="doc_file" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 border border-slate-300 dark:border-slate-700 rounded-xl p-1" />
 
-                    <!-- Default State -->
-                    <div wire:loading.remove wire:target="doc_file" class="space-y-2">
-                        @if($doc_file)
-                            <div class="flex items-center justify-center gap-3 text-emerald-600 font-bold text-xs">
-                                <x-icon name="check-circle" class="w-6 h-6 shrink-0" />
-                                <div class="text-right truncate">
-                                    <p class="font-bold text-slate-800 dark:text-white truncate">{{ $doc_file->getClientOriginalName() }}</p>
-                                    <p class="text-[10px] text-slate-400">{{ round($doc_file->getSize() / 1024) }} KB</p>
-                                </div>
-                            </div>
-                        @else
-                            <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-600 mx-auto flex items-center justify-center group-hover:scale-110 transition">
-                                <x-icon name="cloud-arrow-up" class="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p class="text-xs font-extrabold text-slate-800 dark:text-slate-200">کلیک بکە یان فایلەکە لێرەدا دابنێ</p>
-                                <p class="text-[10px] text-slate-400 mt-0.5">پشتیگیری PNG, JPG, PDF, DOC (بەرزترین قەبارە 10MB)</p>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Livewire Loading State during File Upload -->
-                    <div wire:loading wire:target="doc_file" class="space-y-2 py-2">
-                        <div class="inline-block animate-spin w-8 h-8 border-3 border-rose-600 border-t-transparent rounded-full"></div>
-                        <p class="text-xs font-extrabold text-rose-600 animate-pulse">لە بارکردندایە... تکایە چاوەڕێ بکە</p>
-                    </div>
+                <!-- Live Loading Spinner & Indicator -->
+                <div wire:loading wire:target="doc_file" class="flex items-center gap-2 text-xs font-bold text-rose-600 py-1">
+                    <x-icon name="arrow-path" class="w-4 h-4 animate-spin" />
+                    <span>تکایە چاوەڕێ بکە... لە حاڵەتی بارکردندایە (Uploading File)...</span>
                 </div>
             </div>
-        </div>
 
-        <x-slot:footer>
-            <div class="flex justify-end gap-2">
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
                 <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                <x-button primary label="بارکردنی فایل" wire:click="uploadDocument" spinner="uploadDocument" class="font-extrabold shadow-md shadow-rose-600/25 px-5" />
+                <x-button type="submit" primary label="بارکردن" spinner="uploadDocument" wire:loading.attr="disabled" class="font-bold shadow-md shadow-rose-600/20" />
             </div>
-        </x-slot:footer>
+        </form>
     </x-modal-card>
 
-    <!-- Aid Modal -->
-    <x-modal-card title="تۆمارکردنی هاوکاری نوێ" wire:model="showAidModal" max-width="md">
-        <div class="space-y-4">
-            <x-datetime-picker wire:model="aid_date" label="بەرواری هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            <x-native-select wire:model="aid_category" label="جۆری هاوکاری">
-                <option value="financial">هاوکاری دارایی</option>
-                <option value="medication">دەرمان</option>
-                <option value="food">خواردن و بەشەخۆراک</option>
-                <option value="medical_supplies">کەرەستەی پزشکی</option>
-                <option value="surgery">نەشتەرگەری</option>
-                <option value="transport">گواستنەوە</option>
-                <option value="other">هاوکاری تر</option>
-            </x-native-select>
-            <x-currency wire:model="aid_amount" label="بڕی پارە (IQD) *" thousands="," :precision="0" placeholder="0" />
-            <x-input wire:model="aid_funder" label="سەرچاوەی هاوکاری" placeholder="خێرخواز / کۆمەڵە" />
-            <x-textarea wire:model="aid_notes" label="تێبینی" />
+    <!-- Interactive Lightbox Viewer Modal for Fullscreen Image/PDF Preview -->
+    <div 
+        x-data="{ 
+            open: false, 
+            title: '', 
+            type: '', 
+            url: '', 
+            isImage: true, 
+            printUrl: '', 
+            downloadUrl: '',
+            zoom: 100,
+            rotation: 0,
+            zoomIn() { if(this.zoom < 250) this.zoom += 25; },
+            zoomOut() { if(this.zoom > 50) this.zoom -= 25; },
+            rotate() { this.rotation = (this.rotation + 90) % 360; },
+            reset() { this.zoom = 100; this.rotation = 0; }
+        }" 
+        @open-lightbox.window="
+            open = true; 
+            title = $event.detail.title; 
+            type = $event.detail.type; 
+            url = $event.detail.url; 
+            isImage = $event.detail.isImage; 
+            printUrl = $event.detail.printUrl; 
+            downloadUrl = $event.detail.downloadUrl;
+            reset();
+        " 
+        x-show="open" 
+        x-transition.opacity 
+        class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6" 
+        style="display: none;"
+    >
+        <!-- Top Control Bar -->
+        <div class="flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-2xl p-3 px-5 text-white shadow-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black">
+                    <x-icon name="magnifying-glass" class="w-5 h-5" />
+                </div>
+                <div>
+                    <h3 class="font-black text-sm text-white" x-text="title"></h3>
+                    <p class="text-[11px] text-slate-400" x-text="'جۆر: ' + type"></p>
+                </div>
+            </div>
+
+            <!-- Toolbar Controls -->
+            <div class="flex items-center gap-2">
+                <template x-if="isImage">
+                    <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                        <button @click="zoomIn()" class="p-1.5 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition" title="گەورەکردنەوە (+)">
+                            <x-icon name="magnifying-glass-plus" class="w-5 h-5" />
+                        </button>
+                        <button @click="zoomOut()" class="p-1.5 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition" title="بچووککردنەوە (-)">
+                            <x-icon name="magnifying-glass-minus" class="w-5 h-5" />
+                        </button>
+                        <button @click="rotate()" class="p-1.5 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition" title="سوڕاندنەوە (90 deg)">
+                            <x-icon name="arrow-path" class="w-5 h-5" />
+                        </button>
+                        <span class="text-xs font-mono font-bold px-2 text-slate-400" x-text="zoom + '%'"></span>
+                    </div>
+                </template>
+
+                <a :href="downloadUrl" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center gap-1.5 shadow">
+                    <x-icon name="arrow-down-tray" class="w-4 h-4" />
+                    <span>داگرتن</span>
+                </a>
+
+                <a :href="printUrl" target="_blank" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition flex items-center gap-1.5 shadow">
+                    <x-icon name="printer" class="w-4 h-4" />
+                    <span>چاپکردن</span>
+                </a>
+
+                <button @click="open = false" class="p-2 bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white rounded-xl transition ms-2">
+                    <x-icon name="x-mark" class="w-6 h-6" />
+                </button>
+            </div>
         </div>
 
-        <x-slot:footer>
-            <div class="flex justify-end gap-2">
-                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                <x-button primary label="پاشەکەوتکردن" wire:click="addAssistance" spinner="addAssistance" class="font-bold shadow-md shadow-rose-600/20" />
-            </div>
-        </x-slot:footer>
-    </x-modal-card>
+        <!-- Center Document Content Area -->
+        <div class="flex-1 flex items-center justify-center overflow-auto p-4 my-2">
+            <template x-if="isImage">
+                <img 
+                    :src="url" 
+                    :alt="title" 
+                    :style="`transform: scale(${zoom / 100}) rotate(${rotation}deg); transition: transform 0.2s ease-out; max-height: 80vh;`" 
+                    class="object-contain rounded-2xl shadow-2xl border border-slate-800"
+                />
+            </template>
 
-    <!-- Contact Modal -->
-    <x-modal-card title="تۆماری بەدواداچوونی پەیوەندی" wire:model="showContactModal" max-width="md">
-        <div class="space-y-4">
-            <x-datetime-picker wire:model="contact_date" label="بەرواری پەیوەندی *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            <x-native-select wire:model="contact_channel" label="جۆری پەیوەندی">
-                <option value="phone">تەلەفۆن</option>
-                <option value="whatsapp">واتسئەپ</option>
-                <option value="in_person">سەردان</option>
-                <option value="other">تر</option>
-            </x-native-select>
-            <x-checkbox wire:model="contact_successful" label="پەیوەندییەکە سەرکەوتوو بوو؟" />
-            <x-textarea wire:model="contact_notes" label="ئەنجام و تێبینی پەیوەندی" />
+            <template x-if="!isImage">
+                <iframe :src="url" class="w-full h-full rounded-2xl border border-slate-800 min-h-[75vh]"></iframe>
+            </template>
         </div>
+    </div>
 
-        <x-slot:footer>
-            <div class="flex justify-end gap-2">
-                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                <x-button primary label="پاشەکەوتکردن" wire:click="addContact" spinner="addContact" class="font-bold shadow-md shadow-rose-600/20" />
+    <!-- Custom Support Letter Modal -->
+    <div x-data="{ open: @entangle('showSupportModal') }" x-show="open" x-transition.opacity class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 text-right">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                        <x-icon name="document-text" class="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-900 dark:text-white text-base">دروستکردنی نووسراوی پشتگیری فەرمی</h3>
+                        <p class="text-[11px] text-slate-400">زانیارییە سەرەکییەکانی سەرپەڕەی نوسراوەکە بنووسە</p>
+                    </div>
+                </div>
+                <button @click="open = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-xl">
+                    <x-icon name="x-mark" class="w-6 h-6" />
+                </button>
             </div>
-        </x-slot:footer>
-    </x-modal-card>
 
-    <!-- Medical Modal -->
-    <x-modal-card title="تۆماری چاودێری پزیشکی" wire:model="showMedicalModal" max-width="md">
-        <div class="space-y-4">
-            <x-datetime-picker wire:model="med_date" label="بەروار *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            <x-native-select wire:model="med_type" label="جۆری ڕووداو / سەردان">
-                <option value="hospital_visit">سەردانی نەخۆشخانە</option>
-                <option value="bleeding_episode">خوێنڕشتن (Bleeding Episode)</option>
-                <option value="admission">داخڵبوونی نەخۆشخانە</option>
-                <option value="surgery">نەشتەرگەری</option>
-                <option value="lab_test">تاقیکردنەوەی تاقیگە</option>
-                <option value="factor_usage">بەکارهێنانی Factor Concentrate</option>
-                <option value="doctor_note">تێبینی پزشکی</option>
-            </x-native-select>
-            <x-input wire:model="med_hospital" label="ناوی نەخۆشخانە" placeholder="نەخۆشخانەی هیوا" />
-            <x-input wire:model="med_factor" label="جۆر و بڕی Factor" placeholder="Factor VIII - 1000 IU" />
-            <x-textarea wire:model="med_details" label="وردەکاری ڕووداو / سەردان" />
+            <div class="space-y-4">
+                <x-input wire:model="letter_recipient" label="بۆ / لایەنی پەیوەندیدار *" placeholder="سەرجەم لایەنە پەیوەندیدارەکان / بەڕێوەبەرایەتی ..." />
+                <x-input wire:model="letter_subject" label="بابەت / بابەتی پشتگیری *" placeholder="نوسراوی پشتگیری / پشتگیری چارەسەر" />
+            </div>
+
+            <div class="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+                <x-button flat label="پاشگەزبوونەوە" @click="open = false" class="font-bold" />
+                <a 
+                    x-bind:href="'{{ route('patients.support-letter', $patient) }}?recipient=' + encodeURIComponent($wire.letter_recipient) + '&subject=' + encodeURIComponent($wire.letter_subject)" 
+                    target="_blank" 
+                    @click="open = false" 
+                    class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition flex items-center gap-2 shadow-md shadow-emerald-600/30"
+                >
+                    <x-icon name="printer" class="w-4 h-4" />
+                    <span>چاپکردنی پشتگیری (A4 Print)</span>
+                </a>
+            </div>
         </div>
-
-        <x-slot:footer>
-            <div class="flex justify-end gap-2">
-                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                <x-button primary label="پاشەکەوتکردن" wire:click="addMedicalLog" spinner="addMedicalLog" class="font-bold shadow-md shadow-rose-600/20" />
-            </div>
-        </x-slot:footer>
-    </x-modal-card>
-
-    <!-- Membership Payment Modal -->
-    <x-modal-card title="تۆمارکردنی دراو / ئەندامێتی" wire:model="showPaymentModal" max-width="md">
-        <div class="space-y-4">
-            <x-datetime-picker wire:model="pay_date" label="بەرواری پارەدان *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            <x-currency wire:model="pay_amount" label="بڕی دراو (IQD) *" thousands="," :precision="0" placeholder="0" />
-            <x-input wire:model="pay_receipt" label="ژمارەی وەسڵ / کلاچ" placeholder="REC-1001" />
-            <x-textarea wire:model="pay_notes" label="تێبینی" />
-        </div>
-
-        <x-slot:footer>
-            <div class="flex justify-end gap-2">
-                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
-                <x-button primary label="پاشەکەوتکردن" wire:click="recordMembershipPayment" spinner="recordMembershipPayment" class="font-bold shadow-md shadow-rose-600/20" />
-            </div>
-        </x-slot:footer>
-    </x-modal-card>
+    </div>
 </div>

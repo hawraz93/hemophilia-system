@@ -6,11 +6,18 @@
             <p class="text-xs text-slate-500 mt-1">تۆمارکردن، گەڕان، فلتەرکردن و لەخۆگرتنی گشت زانیارییەکانی نەخۆش</p>
         </div>
 
-        @if(!auth()->user()->isViewer())
-            <x-button primary icon="user-plus" href="{{ route('patients.create') }}" class="font-bold shadow-md shadow-rose-600/20">
-                تۆمارکردنی نەخۆشی نوێ
-            </x-button>
-        @endif
+        <div class="flex items-center gap-3">
+            <button wire:click="exportExcel" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-md shadow-emerald-600/20">
+                <x-icon name="arrow-down-tray" class="w-4 h-4" />
+                <span>داگرتن بە Excel</span>
+            </button>
+
+            @if(!auth()->user()->isViewer())
+                <x-button primary icon="user-plus" href="{{ route('patients.create') }}" class="font-bold shadow-md shadow-rose-600/20">
+                    تۆمارکردنی نەخۆشی نوێ
+                </x-button>
+            @endif
+        </div>
     </div>
 
     <!-- Search & Filters Bar -->
@@ -25,8 +32,10 @@
             wire:model.live="filter_type"
             :options="[
                 ['label' => 'هەموو جۆرەکانی هیمۆفیلیا', 'value' => ''],
-                ['label' => 'هیمۆفیلیا A', 'value' => 'A'],
-                ['label' => 'هیمۆفیلیا B', 'value' => 'B'],
+                ['label' => 'هیمۆفیلیای A', 'value' => 'A'],
+                ['label' => 'هیمۆفیلیای B', 'value' => 'B'],
+                ['label' => 'ڤۆن ویلی براند', 'value' => 'von_willebrand'],
+                ['label' => 'خوێنبەربوونی تر', 'value' => 'other_bleeding'],
                 ['label' => 'جۆری تر', 'value' => 'other'],
             ]"
             option-label="label"
@@ -36,10 +45,10 @@
         <x-native-select
             wire:model.live="filter_status"
             :options="[
-                ['label' => 'هەموو لیستەکان', 'value' => ''],
-                ['label' => 'لیستی سەوز (تەواو)', 'value' => 'green'],
-                ['label' => 'لیستی زەرد (داتای ناتەواو)', 'value' => 'yellow'],
-                ['label' => 'لیستی سوور (بێوەڵام)', 'value' => 'red'],
+                ['label' => 'هەموو دۆخەکان', 'value' => ''],
+                ['label' => 'سەوز (تەواو)', 'value' => 'green'],
+                ['label' => 'زەرد (ناتەواو)', 'value' => 'yellow'],
+                ['label' => 'سوور (پەیوەندی نەپچڕاو)', 'value' => 'red'],
             ]"
             option-label="label"
             option-value="value"
@@ -63,65 +72,82 @@
         />
     </div>
 
-    <!-- Patients Table -->
+    <!-- Patients Table Card -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-end text-sm">
                 <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="p-4">کۆدی نەخۆش</th>
-                        <th class="p-4">ناوی تەواو</th>
-                        <th class="p-4">جۆری هیمۆفیلیا</th>
-                        <th class="p-4">گروپی خوێن</th>
-                        <th class="p-4">ژمارەی مۆبایل</th>
-                        <th class="p-4">پارێزگا / شار</th>
-                        <th class="p-4 text-center">لیستی سەوز/زەرد/سوور</th>
-                        <th class="p-4 text-center">کردارەکان</th>
+                        <th class="p-3.5">کۆد</th>
+                        <th class="p-3.5">ناوی تەواو</th>
+                        <th class="p-3.5">ژ. ئەندامێتی</th>
+                        <th class="p-3.5">پەیوەندخوازە بە</th>
+                        <th class="p-3.5">جۆری هیمۆفیلیا</th>
+                        <th class="p-3.5">گروپی خوێن</th>
+                        <th class="p-3.5">ژمارەی مۆبایل</th>
+                        <th class="p-3.5 text-center">دۆخی لیست</th>
+                        <th class="p-3.5 text-center">کردارەکان</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     @forelse($patients as $patient)
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition">
-                            <td class="p-4 font-mono font-bold text-slate-600 dark:text-slate-300">
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition">
+                            <td class="p-3.5 font-mono font-bold text-slate-600 dark:text-slate-300">
                                 {{ $patient->patient_code }}
                             </td>
-                            <td class="p-4 font-bold text-slate-900 dark:text-white">
+                            <td class="p-3.5 font-bold text-slate-900 dark:text-white">
                                 <a href="{{ route('patients.show', $patient) }}" class="hover:text-rose-600 transition">
                                     {{ $patient->full_name }}
                                 </a>
-                                @if($patient->membership_number)
-                                    <span class="block text-xs font-normal text-slate-400">ژ. ئەندامێتی: {{ $patient->membership_number }}</span>
+                                @if($patient->hiwa_code)
+                                    <span class="block text-[10px] text-slate-400 font-normal font-mono">هیوا: {{ $patient->hiwa_code }}</span>
                                 @endif
                             </td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                    {{ $patient->hemophilia_type?->label() }} — {{ $patient->severity?->label() }}
-                                </span>
+                            <td class="p-3.5 font-mono text-slate-600 dark:text-slate-300">
+                                {{ $patient->membership_number ?? '—' }}
+                                @if($patient->membership_type)
+                                    <span class="block text-[10px] text-indigo-600 font-bold">{{ $patient->membership_type->label() }}</span>
+                                @endif
                             </td>
-                            <td class="p-4 font-bold text-slate-700 dark:text-slate-300">
+                            <td class="p-3.5">
+                                @if($patient->party_affiliation)
+                                    <span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold border inline-block {{ $patient->party_affiliation->badgeClasses() }}">
+                                        {{ $patient->party_affiliation->label() }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 text-xs">—</span>
+                                @endif
+                            </td>
+                            <td class="p-3.5 font-bold text-rose-600 dark:text-rose-400">
+                                {{ $patient->hemophilia_type?->label() }}
+                                <span class="block text-[10px] text-slate-400 font-normal">پلەی {{ $patient->severity?->label() }}</span>
+                            </td>
+                            <td class="p-3.5 font-bold text-slate-700 dark:text-slate-200">
                                 {{ $patient->blood_group?->value ?? '—' }}
                             </td>
-                            <td class="p-4 font-mono text-slate-700 dark:text-slate-300">
+                            <td class="p-3.5 font-mono text-slate-600 dark:text-slate-300">
                                 {{ $patient->phone }}
                             </td>
-                            <td class="p-4 text-slate-600 dark:text-slate-400">
-                                {{ $patient->governorate }} {{ $patient->district ? " / {$patient->district}" : '' }}
-                            </td>
-                            <td class="p-4 text-center">
+                            <td class="p-3.5 text-center">
                                 <x-badge :color="$patient->list_status->color()" :label="$patient->list_status->label()" />
                             </td>
-                            <td class="p-4 text-center space-x-1 space-x-reverse">
-                                <x-button sm outline secondary icon="eye" href="{{ route('patients.show', $patient) }}" />
-                                @if(!auth()->user()->isViewer())
-                                    <x-button sm outline primary icon="pencil-square" href="{{ route('patients.edit', $patient) }}" />
-                                @endif
+                            <td class="p-3.5 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="{{ route('patients.show', $patient) }}" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition" title="بینینی زانیاری">
+                                        <x-icon name="eye" class="w-4 h-4" />
+                                    </a>
+
+                                    @if(!auth()->user()->isViewer())
+                                        <a href="{{ route('patients.edit', $patient) }}" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition" title="دەستکاریکردن">
+                                            <x-icon name="pencil-square" class="w-4 h-4" />
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-500">
-                                هیچ نەخۆشێک بەم تایبەتمەندییانە نەدۆزرایەوە.
-                            </td>
+                            <td colspan="9" class="p-8 text-center text-slate-400">هیچ نەخۆشێک نەدۆزرایەوە.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -132,5 +158,4 @@
             {{ $patients->links() }}
         </div>
     </div>
-</div>
 </div>

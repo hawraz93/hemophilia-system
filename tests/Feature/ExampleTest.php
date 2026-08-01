@@ -6,9 +6,9 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_root_redirects_to_login(): void
+    public function test_root_returns_welcome_page(): void
     {
         $response = $this->get('/');
-        $response->assertRedirect('/login');
+        $response->assertStatus(200);
     }
 }

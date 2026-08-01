@@ -19,6 +19,9 @@ class PatientForm extends Component
     public ?string $patient_code = null;
     public ?string $hiwa_code = null;
     public ?string $membership_number = null;
+    public string $membership_type = 'ordinary';
+    public ?string $party_affiliation = null;
+    public ?string $voting_card_number = null;
     public ?string $national_id = null;
     public string $gender = 'male';
     public ?string $dob = null;
@@ -54,6 +57,9 @@ class PatientForm extends Component
             $this->grandfather_name = $patient->grandfather_name;
             $this->hiwa_code = $patient->hiwa_code;
             $this->membership_number = $patient->membership_number;
+            $this->membership_type = $patient->membership_type?->value ?? 'ordinary';
+            $this->party_affiliation = $patient->party_affiliation?->value;
+            $this->voting_card_number = $patient->voting_card_number;
             $this->national_id = $patient->national_id;
             $this->gender = $patient->gender->value;
             $this->dob = $patient->dob?->format('Y-m-d');
@@ -114,6 +120,9 @@ class PatientForm extends Component
             'full_name' => $fullName,
             'hiwa_code' => $this->hiwa_code,
             'membership_number' => $this->membership_number,
+            'membership_type' => $this->membership_type,
+            'party_affiliation' => $this->party_affiliation ?: null,
+            'voting_card_number' => $this->voting_card_number,
             'national_id' => $this->national_id,
             'gender' => $this->gender,
             'dob' => $this->dob ?: null,

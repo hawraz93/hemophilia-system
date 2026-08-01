@@ -7,6 +7,8 @@ use App\Enums\Gender;
 use App\Enums\HemophiliaType;
 use App\Enums\InfectiousStatus;
 use App\Enums\MaritalStatus;
+use App\Enums\MembershipType;
+use App\Enums\PartyAffiliation;
 use App\Enums\PatientListStatus;
 use App\Enums\SeverityLevel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +25,9 @@ class Patient extends Model
         'patient_code',
         'hiwa_code',
         'membership_number',
+        'membership_type',
+        'party_affiliation',
+        'voting_card_number',
         'national_id',
         'first_name',
         'father_name',
@@ -72,6 +77,8 @@ class Patient extends Model
             'hepatitis_c' => InfectiousStatus::class,
             'hiv' => InfectiousStatus::class,
             'list_status' => PatientListStatus::class,
+            'membership_type' => MembershipType::class,
+            'party_affiliation' => PartyAffiliation::class,
         ];
     }
 

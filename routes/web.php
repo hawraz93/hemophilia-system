@@ -1,7 +1,7 @@
 <?php
 
 use App\Livewire\AboutDeveloper;
-use App\Livewire\UserProfile;
+use App\Livewire\ActivityIndex;
 use App\Livewire\AssistanceIndex;
 use App\Livewire\Auth\Login;
 use App\Livewire\ContactIndex;
@@ -14,9 +14,13 @@ use App\Livewire\PatientIndex;
 use App\Livewire\PatientShow;
 use App\Livewire\ReportIndex;
 use App\Livewire\UserIndex;
+use App\Livewire\UserProfile;
 use App\Models\Patient;
+use App\Models\PatientDocument;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return view('welcome');
@@ -39,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/patients/create', PatientForm::class)->name('patients.create');
     Route::get('/patients/{patient}', PatientShow::class)->name('patients.show');
     Route::get('/patients/{patient}/edit', PatientForm::class)->name('patients.edit');
+    Route::get('/activities', ActivityIndex::class)->name('activities.index');
     Route::get('/assistances', AssistanceIndex::class)->name('assistances.index');
     Route::get('/memberships', MembershipIndex::class)->name('memberships.index');
     Route::get('/contacts', ContactIndex::class)->name('contacts.index');
@@ -48,13 +53,31 @@ Route::middleware('auth')->group(function () {
     Route::get('/about-dev', AboutDeveloper::class)->name('about.developer');
     Route::get('/profile', UserProfile::class)->name('profile');
 
+    // Secure Document Download & Print Endpoints
+    Route::get('/patient-documents/{document}/download', function (PatientDocument $document) {
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'فایلی بەڵگەنامە نەدۆزرایەوە.');
+        }
+        $fullPath = storage_path('app/public/' . $document->file_path);
+        return response()->download($fullPath, $document->title . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION));
+    })->name('patient-documents.download');
+
+    Route::get('/patient-documents/{document}/print', function (PatientDocument $document) {
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'فایلی بەڵگەنامە نەدۆزرایەوە.');
+        }
+        return view('print.single-document', compact('document'));
+    })->name('patient-documents.print');
+
     // Printable Views
     Route::get('/patients/{patient}/id-card', function (Patient $patient) {
         return view('print.id-card', compact('patient'));
     })->name('patients.id-card');
 
-    Route::get('/patients/{patient}/support-letter', function (Patient $patient) {
-        return view('print.support-letter', compact('patient'));
+    Route::get('/patients/{patient}/support-letter', function (Patient $patient, Request $request) {
+        $recipient = $request->query('recipient', 'سەرجەم لایەنە پەیوەندیدارەکان');
+        $subject = $request->query('subject', 'نوسراوی پشتگیری');
+        return view('print.support-letter', compact('patient', 'recipient', 'subject'));
     })->name('patients.support-letter');
 
     Route::get('/patients/{patient}/summary-report', function (Patient $patient) {
