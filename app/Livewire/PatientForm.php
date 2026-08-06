@@ -27,7 +27,7 @@ class PatientForm extends Component
     public ?string $dob = null;
     public ?int $age = null;
     public ?string $marital_status = null;
-    public int $children_count = 0;
+    public ?int $children_count = 0;
     public string $phone = '';
     public ?string $secondary_phone = null;
     public ?string $address = null;
@@ -65,7 +65,7 @@ class PatientForm extends Component
             $this->dob = $patient->dob?->format('Y-m-d');
             $this->age = $patient->age;
             $this->marital_status = $patient->marital_status?->value;
-            $this->children_count = $patient->children_count;
+            $this->children_count = $patient->children_count ?? 0;
             $this->phone = $patient->phone;
             $this->secondary_phone = $patient->secondary_phone;
             $this->address = $patient->address;
@@ -128,7 +128,7 @@ class PatientForm extends Component
             'dob' => $this->dob ?: null,
             'age' => $this->age ?: ($this->dob ? \Carbon\Carbon::parse($this->dob)->age : null),
             'marital_status' => $this->marital_status ?: null,
-            'children_count' => $this->children_count,
+            'children_count' => $this->children_count ?? 0,
             'phone' => $this->phone,
             'secondary_phone' => $this->secondary_phone,
             'address' => $this->address,
