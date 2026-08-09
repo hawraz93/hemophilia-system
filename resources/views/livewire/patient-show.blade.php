@@ -416,6 +416,130 @@
                 </div>
             </div>
         @endif
+
+        <!-- Tab 5: Medical Care -->
+        @if($activeTab === 'medical')
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">تۆماری چاودێری پزیشکی</h3>
+                    @if(!auth()->user()->isViewer())
+                        <x-button primary wire:click="$set('showMedicalModal', true)" icon="plus" label="تۆمارکردنی زانیاری پزیشکی" class="font-bold" />
+                    @endif
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-end text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 font-bold border-b">
+                            <tr>
+                                <th class="p-3">بەروار</th>
+                                <th class="p-3">جۆری سەردان / چالاکی</th>
+                                <th class="p-3">نەخۆشخانە</th>
+                                <th class="p-3">فاکتەر / دەرمان</th>
+                                <th class="p-3">وردەکاری</th>
+                                <th class="p-3">تێبینی پزیشک</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            @forelse($patient->medicalLogs as $med)
+                                <tr>
+                                    <td class="p-3 font-mono">{{ $med->log_date->format('Y-m-d') }}</td>
+                                    <td class="p-3 font-bold">{{ $med->log_type->label() }}</td>
+                                    <td class="p-3">{{ $med->hospital_name ?? '—' }}</td>
+                                    <td class="p-3 font-semibold text-rose-600">{{ $med->factor_name_dose ?? '—' }}</td>
+                                    <td class="p-3 text-xs text-slate-600 dark:text-slate-300">{{ $med->details ?? '—' }}</td>
+                                    <td class="p-3 text-xs text-slate-500">{{ $med->doctor_notes ?? '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ تۆمارێکی پزیشکی تۆمار نەکراوە.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        <!-- Tab 6: Follow-up Contacts -->
+        @if($activeTab === 'contacts')
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">مێژووی پەیوەندییەکانی بەدواداچوون</h3>
+                    @if(!auth()->user()->isViewer())
+                        <x-button primary wire:click="$set('showContactModal', true)" icon="plus" label="تۆمارکردنی پەیوەندی" class="font-bold" />
+                    @endif
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-end text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 font-bold border-b">
+                            <tr>
+                                <th class="p-3">بەروار</th>
+                                <th class="p-3">کەناڵی پەیوەندی</th>
+                                <th class="p-3">ئەنجامی پەیوەندی</th>
+                                <th class="p-3">تێبینی و دەرئەنجام</th>
+                                <th class="p-3">تۆمارکەر</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            @forelse($patient->contacts as $con)
+                                <tr>
+                                    <td class="p-3 font-mono">{{ $con->contact_date->format('Y-m-d') }}</td>
+                                    <td class="p-3 font-bold">{{ $con->channel->label() }}</td>
+                                    <td class="p-3">
+                                        @if($con->is_successful)
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">سەرکەوتوو بوو</span>
+                                        @else
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300">وەڵامی نەدایەوە / بەردەست نەبوو</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-3 text-xs text-slate-600 dark:text-slate-300">{{ $con->outcome_notes ?? '—' }}</td>
+                                    <td class="p-3 text-xs text-slate-500">{{ $con->user?->name ?? '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-slate-400">هیچ پەیوەندییەکی بەدواداچوون تۆمار نەکراوە.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        <!-- Tab 7: Activity Logs -->
+        @if($activeTab === 'logs')
+            <div class="p-6 space-y-4">
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">مێژووی چالاکی و گۆڕانکارییەکان</h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-end text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 font-bold border-b">
+                            <tr>
+                                <th class="p-3">کات و بەروار</th>
+                                <th class="p-3">جۆری چالاکی</th>
+                                <th class="p-3">بەکارهێنەر</th>
+                                <th class="p-3">IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            @forelse($patient->auditLogs as $log)
+                                <tr>
+                                    <td class="p-3 font-mono text-xs">{{ $log->created_at->format('Y-m-d H:i') }}</td>
+                                    <td class="p-3 font-bold text-xs">{{ $log->event }}</td>
+                                    <td class="p-3 text-xs">{{ $log->user?->name ?? 'سیستەم' }}</td>
+                                    <td class="p-3 font-mono text-xs text-slate-400">{{ $log->ip_address ?? '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="p-8 text-center text-slate-400">هیچ مێژوویەکی چالاکی تۆمار نەکراوە.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Upload Document Modal with Live Loading Progress -->
@@ -562,12 +686,13 @@
             <div class="space-y-4">
                 <x-input wire:model="letter_recipient" label="بۆ / لایەنی پەیوەندیدار *" placeholder="سەرجەم لایەنە پەیوەندیدارەکان / بەڕێوەبەرایەتی ..." />
                 <x-input wire:model="letter_subject" label="بابەت / بابەتی پشتگیری *" placeholder="نوسراوی پشتگیری / پشتگیری چارەسەر" />
+                <x-input wire:model="letter_number" label="ژمارەی نووسراو *" placeholder="مثلاً: 351 یان SUP-2026-0001" />
             </div>
 
             <div class="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
                 <x-button flat label="پاشگەزبوونەوە" @click="open = false" class="font-bold" />
                 <a 
-                    x-bind:href="'{{ route('patients.support-letter', $patient) }}?recipient=' + encodeURIComponent($wire.letter_recipient) + '&subject=' + encodeURIComponent($wire.letter_subject)" 
+                    x-bind:href="'{{ route('patients.support-letter', $patient) }}?recipient=' + encodeURIComponent($wire.letter_recipient) + '&subject=' + encodeURIComponent($wire.letter_subject) + '&ref_no=' + encodeURIComponent($wire.letter_number)" 
                     target="_blank" 
                     @click="open = false" 
                     class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition flex items-center gap-2 shadow-md shadow-emerald-600/30"
@@ -578,4 +703,86 @@
             </div>
         </div>
     </div>
+
+    <!-- Membership Payment Modal -->
+    <x-modal-card title="تۆمارکردنی وەسلێک (رسوماتی ئەندامێتی)" wire:model="showPaymentModal" max-width="md">
+        <form wire:submit="recordMembershipPayment" class="space-y-4">
+            <x-datetime-picker wire:model="pay_date" label="بەرواری پارەدان *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+            <x-currency wire:model="pay_amount" label="بڕی دانراو (IQD) *" thousands="," :precision="0" placeholder="25000" />
+            <x-input wire:model="pay_receipt" label="ژمارەی وەسڵ" placeholder="مثلاً: 123456" />
+            <x-textarea wire:model="pay_notes" label="تێبینی" placeholder="تێبینی زیادە..." />
+
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button type="submit" primary label="تۆمارکردنی پارەدان" spinner="recordMembershipPayment" wire:loading.attr="disabled" class="font-bold shadow-md shadow-emerald-600/20" />
+            </div>
+        </form>
+    </x-modal-card>
+
+    <!-- Assistance / Aid Modal -->
+    <x-modal-card title="تۆمارکردنی هاوکاری نوێ" wire:model="showAidModal" max-width="md">
+        <form wire:submit="addAssistance" class="space-y-4">
+            <x-datetime-picker wire:model="aid_date" label="بەرواری هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+            
+            <x-native-select wire:model="aid_category" label="جۆری هاوکاری *">
+                @foreach(\App\Enums\AssistanceCategory::cases() as $cat)
+                    <option value="{{ $cat->value }}">{{ $cat->label() }}</option>
+                @endforeach
+            </x-native-select>
+
+            <x-currency wire:model="aid_amount" label="بڕی هاوکاری (IQD) *" thousands="," :precision="0" placeholder="0" />
+            <x-input wire:model="aid_funder" label="سەرچاوە / دابینکەر" placeholder="خێرخواز، ڕێکخراو..." />
+            <x-textarea wire:model="aid_notes" label="تێبینی" placeholder="تێبینی زیاتر..." />
+
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button type="submit" primary label="تۆمارکردنی هاوکاری" spinner="addAssistance" wire:loading.attr="disabled" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </form>
+    </x-modal-card>
+
+    <!-- Medical Log Modal -->
+    <x-modal-card title="تۆمارکردنی زانیاری پزیشکی نوێ" wire:model="showMedicalModal" max-width="md">
+        <form wire:submit="addMedicalLog" class="space-y-4">
+            <x-datetime-picker wire:model="med_date" label="بەروار *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+            
+            <x-native-select wire:model="med_type" label="جۆری سەردان / چالاکی *">
+                @foreach(\App\Enums\MedicalLogType::cases() as $mtype)
+                    <option value="{{ $mtype->value }}">{{ $mtype->label() }}</option>
+                @endforeach
+            </x-native-select>
+
+            <x-input wire:model="med_hospital" label="ناوی نەخۆشخانە / مەڵبەند" placeholder="نەخۆشخانەی هیوا..." />
+            <x-input wire:model="med_factor" label="ناوی فاکتەر / دەرمان و دۆز" placeholder="Factor VIII - 1000 IU..." />
+            <x-textarea wire:model="med_details" label="وردەکاری" placeholder="تێبینی دەربارەی دۆخی نەخۆش..." />
+            <x-textarea wire:model="med_notes" label="تێبینی پزیشک" placeholder="ڕاسپاردەکانی پزیشک..." />
+
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button type="submit" primary label="تۆمارکردن" spinner="addMedicalLog" wire:loading.attr="disabled" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </form>
+    </x-modal-card>
+
+    <!-- Contact Log Modal -->
+    <x-modal-card title="تۆمارکردنی پەیوەندی بەدواداچوون" wire:model="showContactModal" max-width="md">
+        <form wire:submit="addContact" class="space-y-4">
+            <x-datetime-picker wire:model="contact_date" label="بەرواری پەیوەندی *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+            
+            <x-native-select wire:model="contact_channel" label="کەناڵی پەیوەندی *">
+                @foreach(\App\Enums\ContactChannel::cases() as $chan)
+                    <option value="{{ $chan->value }}">{{ $chan->label() }}</option>
+                @endforeach
+            </x-native-select>
+
+            <x-checkbox wire:model="contact_successful" label="پەیوەندییەکە سەرکەوتوو بوو (وەڵام درایەوە)" />
+
+            <x-textarea wire:model="contact_notes" label="تێبینی و دەرئەنجام" placeholder="دەرئەنجامی ئاخاوتن و بەدواداچوون..." />
+
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />
+                <x-button type="submit" primary label="تۆمارکردن" spinner="addContact" wire:loading.attr="disabled" class="font-bold shadow-md shadow-rose-600/20" />
+            </div>
+        </form>
+    </x-modal-card>
 </div>

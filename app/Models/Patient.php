@@ -92,6 +92,13 @@ class Patient extends Model
         return $this->hasMany(Assistance::class);
     }
 
+    public function campaigns(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(AssistanceCampaign::class, 'assistance_campaign_patients', 'patient_id', 'campaign_id')
+                    ->withPivot('received_at', 'notes')
+                    ->withTimestamps();
+    }
+
     public function membership(): HasOne
     {
         return $this->hasOne(Membership::class);
