@@ -126,6 +126,13 @@
                             </div>
                         </a>
 
+                        <a href="{{ route('aid-campaigns.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-150 {{ request()->routeIs('aid-campaigns.*') ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/25' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                            <div class="flex items-center gap-3">
+                                <x-icon name="user-group" class="w-4 h-4 shrink-0 text-emerald-400" />
+                                <span>هاوکاری گشتی و کەمپینەکان</span>
+                            </div>
+                        </a>
+
                         <a href="{{ route('memberships.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-150 {{ request()->routeIs('memberships.*') ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/25' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <div class="flex items-center gap-3">
                                 <x-icon name="identification" class="w-4 h-4 shrink-0" />

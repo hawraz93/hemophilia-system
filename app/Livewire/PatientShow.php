@@ -80,6 +80,7 @@ class PatientShow extends Component
     public bool $showSupportModal = false;
     public string $letter_recipient = 'سەرجەم لایەنە پەیوەندیدارەکان';
     public string $letter_subject = 'نوسراوی پشتگیری';
+    public string $letter_number = '';
 
     public function mount(Patient $patient)
     {
@@ -89,6 +90,7 @@ class PatientShow extends Component
         $this->med_date = Carbon::now()->format('Y-m-d');
         $this->mail_date = Carbon::now()->format('Y-m-d');
         $this->pay_date = Carbon::now()->format('Y-m-d');
+        $this->letter_number = 'SUP-' . date('Y') . '-' . str_pad($patient->id, 4, '0', STR_PAD_LEFT);
     }
 
     public function uploadDocument()

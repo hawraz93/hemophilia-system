@@ -15,9 +15,11 @@ class OfficialMail extends Model
         'mail_number',
         'patient_id',
         'direction',
+        'stamp_type',
         'mail_date',
         'sender_recipient',
         'reason_subject',
+        'letter_body',
         'file_path',
         'notes',
     ];

@@ -6,6 +6,7 @@ use App\Enums\BloodGroup;
 use App\Enums\Gender;
 use App\Enums\PatientListStatus;
 use App\Enums\UserRole;
+use App\Livewire\AidCampaignIndex;
 use App\Livewire\AssistanceIndex;
 use App\Livewire\PatientShow;
 use App\Livewire\UserIndex;
@@ -157,7 +158,13 @@ class HemophiliaSystemTest extends TestCase
             ->call('save')
             ->assertForbidden();
 
+        Livewire::test(AidCampaignIndex::class)
+            ->set('title', 'Food')
+            ->call('createCampaign')
+            ->assertForbidden();
+
         $this->assertDatabaseCount('assistances', 0);
+        $this->assertDatabaseCount('assistance_campaigns', 0);
     }
 
     public function test_deactivated_user_is_logged_out(): void

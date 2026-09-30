@@ -2,7 +2,7 @@
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <title>نوسراوی پشتگیری - {{ $patient->full_name }}</title>
+    <title>نوسراوی فەرمی - {{ $mail->mail_number }}</title>
     <style>
         @page {
             size: A4 portrait;
@@ -83,13 +83,6 @@
             color: #1e293b;
             font-weight: 800;
         }
-        .header-title h3 {
-            margin: 1px 0 0 0;
-            font-size: 8.5px;
-            color: #64748b;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-        }
 
         .meta-info-box {
             display: flex;
@@ -122,24 +115,14 @@
         }
 
         .content {
-            margin-top: 3px;
+            margin-top: 6px;
             font-size: 12px;
-            line-height: 1.7;
+            line-height: 1.75;
             color: #0f172a;
             text-align: justify;
             position: relative;
             z-index: 1;
-        }
-        .patient-box {
-            background-color: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-right: 4px solid #b91c1c;
-            padding: 6px 12px;
-            margin: 8px 0;
-            border-radius: 5px;
-            font-size: 11.5px;
-            line-height: 1.65;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            white-space: pre-line;
         }
         .footer-wrap {
             position: relative;
@@ -151,12 +134,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-        }
-        .seal-box {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            min-height: 65px;
         }
         .seal-img {
             width: 55px;
@@ -175,6 +153,9 @@
             height: 38px;
             object-fit: contain;
             margin-bottom: -4px;
+        }
+        .manual-space {
+            min-height: 40px;
         }
         .footer {
             border-top: 1px solid #cbd5e1;
@@ -239,11 +220,11 @@
 </head>
 <body>
 
-    <button onclick="window.print()" class="print-btn">🖨️ چاپکردنی نوسراوی پشتگیری (Print)</button>
+    <button onclick="window.print()" class="print-btn">🖨️ چاپکردنی نوسراو (Print)</button>
 
     <div class="screen-wrapper">
         <div class="letter-container">
-            <!-- Background Watermark Image -->
+            <!-- Watermark -->
             <img src="{{ asset('images/logo.jpg') }}" class="watermark" alt="Watermark" />
 
             <div class="content-body">
@@ -258,62 +239,56 @@
                         <div>
                             <h1>کۆمەڵەی هیمۆفیلیای کوردستان</h1>
                             <h2>لقی سلێمانی</h2>
-                            <h3>Kurdistan Hemophilia Society - Sulaimani Branch</h3>
                         </div>
                     </div>
 
                     <div style="width: 120px; text-align: left; font-size: 9px; color: #475569; font-weight: 900; line-height: 1.4;">
-                        ژمارە: <strong style="color: #b91c1c;">{{ $ref_no ?? ('SUP-' . date('Y') . '-' . str_pad($patient->id, 4, '0', STR_PAD_LEFT)) }}</strong><br>
-                        ڕێکەوت: <strong>{{ date('Y / m / d') }}</strong>
+                        ژمارە: <strong style="color: #b91c1c;">{{ $mail->mail_number }}</strong><br>
+                        ڕێکەوت: <strong>{{ $mail->mail_date->format('Y / m / d') }}</strong>
                     </div>
                 </div>
 
                 <!-- Subject & Recipient Block -->
                 <div class="meta-info-box">
                     <div class="meta-recipient">
-                        بۆ / <span>{{ $recipient ?? request('recipient', 'سەرجەم لایەنە پەیوەندیدارەکان') }}</span>
+                        بۆ / <span>{{ $mail->sender_recipient }}</span>
                     </div>
                     <div class="meta-subject">
-                        بابەت / <span>{{ $subject ?? request('subject', 'نوسراوی پشتگیری') }}</span>
+                        بابەت / <span>{{ $mail->reason_subject }}</span>
                     </div>
                 </div>
 
                 <!-- Content Body -->
                 <div class="content">
-                    سڵاو و ڕێز ...<br>
-                    ئاماژە بە تۆمارە فەرمییەکانی کۆمەڵەی هیمۆفیلیای کوردستان (لقی سلێمانی)، پشتگیری دەکەین کە هاووڵاتی ئاماژەپێکراوی خوارەوە ئەندامی بەردەوام و تۆمارکراوی کۆمەڵەکەمانە بە دۆخی <strong>سەوز (تەواو)</strong> و تووشبووی نەخۆشی هیمۆفیلیاست:
-
-                    <div class="patient-box">
-                        • <strong>ناوی تەواو:</strong> {{ $patient->full_name }}<br>
-                        • <strong>کۆدی نەخۆش:</strong> {{ $patient->patient_code }} | <strong>ژمارەی ئەندامێتی:</strong> {{ $patient->membership_number ?? '—' }} ({{ $patient->membership_type?->label() ?? 'ئەندامی ئاسایی' }})<br>
-                        • <strong>جۆری نەخۆشی:</strong> {{ $patient->hemophilia_type?->label() }} (پلەی {{ $patient->severity?->label() }})<br>
-                        • <strong>گروپی خوێن:</strong> {{ $patient->blood_group?->value ?? '—' }} | <strong>کۆدی نەخۆشخانەی هیوا:</strong> {{ $patient->hiwa_code ?? '—' }}<br>
-                        • <strong>ژمارەی ناسنامە / دەنگدان:</strong> {{ $patient->national_id ?? '—' }} {{ $patient->voting_card_number ? '| کارتی دەنگدان: '.$patient->voting_card_number : '' }}<br>
-                        • <strong>ژمارەی مۆبایل:</strong> {{ $patient->phone }}
-                    </div>
-
-                    تکایە هاوکاری و ئاسانکاری پێویستی بۆ بکەن بۆ ڕاییکردنی مامەڵەکانی بەپێی یاسا و ڕێنماییە کارپێکراوەکان.
-
-                    <br><br>
-                    لەگەڵ ڕێزدا ...
+                    {{ $mail->letter_body ?: "سڵاو و ڕێز ...\nئاماژە بە بە بابەتەکە، داواکارین لە بەڕێزتان هاوکاری و کارئاسانی پێویستمان بۆ بکەن." }}
                 </div>
             </div>
 
-            <!-- Bottom Footer & Signature Wrap -->
+            <!-- Footer & Signature Wrap -->
             <div class="footer-wrap">
                 <div class="signature-section">
-                    <!-- Seal Box -->
-                    <div class="seal-box">
-                        <img src="{{ asset('images/logo.jpg') }}" class="seal-img" alt="Seal" />
-                    </div>
-
-                    <div class="signature-box">
+                    @if($mail->stamp_type === 'online')
                         <div>
-                            <img src="{{ asset('images/signature_green.png') }}" class="green-signature" alt="Signature" />
+                            <img src="{{ asset('images/logo.jpg') }}" class="seal-img" alt="Seal" />
                         </div>
-                        <strong style="font-size: 11.5px; color: #0f172a;">زانیار عادل حسین</strong><br>
-                        <span style="font-size: 8.5px; color: #475569;">سەرۆکی کۆمەڵەی هیمۆفیلیای کوردستان / لقی سلێمانی</span>
-                    </div>
+                        <div class="signature-box">
+                            <div>
+                                <img src="{{ asset('images/signature_green.png') }}" class="green-signature" alt="Signature" />
+                            </div>
+                            <strong style="font-size: 11.5px; color: #0f172a;">زانیار عادل حسین</strong><br>
+                            <span style="font-size: 8.5px; color: #475569;">سەرۆکی کۆمەڵەی هیمۆفیلیای کوردستان / لقی سلێمانی</span>
+                        </div>
+                    @else
+                        <!-- Manual Stamp Space for Physical Stamping After Print -->
+                        <div class="manual-space">
+                            <!-- Left blank for physical rubber stamp -->
+                        </div>
+                        <div class="signature-box">
+                            <div class="manual-space"></div>
+                            <strong style="font-size: 11.5px; color: #0f172a;">زانیار عادل حسین</strong><br>
+                            <span style="font-size: 8.5px; color: #475569;">سەرۆکی کۆمەڵەی هیمۆفیلیای کوردستان / لقی سلێمانی</span>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Footer -->
