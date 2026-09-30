@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SecureFileController;
 use App\Livewire\AboutDeveloper;
 use App\Livewire\ActivityIndex;
 use App\Livewire\AidCampaignIndex;
@@ -19,11 +20,9 @@ use App\Livewire\UserProfile;
 use App\Models\AssistanceCampaign;
 use App\Models\OfficialMail;
 use App\Models\Patient;
-use App\Models\PatientDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return view('welcome');
@@ -43,9 +42,9 @@ Route::post('/logout', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardComponent::class)->name('dashboard');
     Route::get('/patients', PatientIndex::class)->name('patients.index');
-    Route::get('/patients/create', PatientForm::class)->name('patients.create');
+    Route::get('/patients/create', PatientForm::class)->name('patients.create')->middleware('can:edit-records');
     Route::get('/patients/{patient}', PatientShow::class)->name('patients.show');
-    Route::get('/patients/{patient}/edit', PatientForm::class)->name('patients.edit');
+    Route::get('/patients/{patient}/edit', PatientForm::class)->name('patients.edit')->middleware('can:edit-records');
     Route::get('/activities', ActivityIndex::class)->name('activities.index');
     Route::get('/assistances', AssistanceIndex::class)->name('assistances.index');
     Route::get('/aid-campaigns', AidCampaignIndex::class)->name('aid-campaigns.index');
@@ -57,21 +56,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/about-dev', AboutDeveloper::class)->name('about.developer');
     Route::get('/profile', UserProfile::class)->name('profile');
 
-    // Secure Document Download & Print Endpoints
-    Route::get('/patient-documents/{document}/download', function (PatientDocument $document) {
-        if (!Storage::disk('public')->exists($document->file_path)) {
-            abort(404, 'فایلی بەڵگەنامە نەدۆزرایەوە.');
-        }
-        $fullPath = storage_path('app/public/' . $document->file_path);
-        return response()->download($fullPath, $document->title . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION));
-    })->name('patient-documents.download');
-
-    Route::get('/patient-documents/{document}/print', function (PatientDocument $document) {
-        if (!Storage::disk('public')->exists($document->file_path)) {
-            abort(404, 'فایلی بەڵگەنامە نەدۆزرایەوە.');
-        }
-        return view('print.single-document', compact('document'));
-    })->name('patient-documents.print');
+    // Secure file endpoints (files live on the private disk)
+    Route::controller(SecureFileController::class)->group(function () {
+        Route::get('/patient-documents/{document}/view', 'viewDocument')->name('patient-documents.view');
+        Route::get('/patient-documents/{document}/download', 'downloadDocument')->name('patient-documents.download');
+        Route::get('/patient-documents/{document}/print', 'printDocument')->name('patient-documents.print');
+        Route::get('/mails/{mail}/file', 'viewMail')->name('mails.file');
+    });
 
     // Printable Views
     Route::get('/patients/{patient}/id-card', function (Patient $patient) {
@@ -100,5 +91,5 @@ Route::middleware('auth')->group(function () {
     })->name('mails.print');
 
     // Admin Only
-    Route::get('/users', UserIndex::class)->name('users.index');
+    Route::get('/users', UserIndex::class)->name('users.index')->middleware('can:manage-users');
 });

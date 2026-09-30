@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\OfficialMail;
 use App\Models\Patient;
+use App\Services\AuditLoggerService;
+use App\Services\CodeGenerator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -49,7 +51,7 @@ class OfficialMailIndex extends Component
     public function mount()
     {
         $this->mail_date = date('Y-m-d');
-        $this->mail_number = 'OFF-' . date('Y') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $this->mail_number = CodeGenerator::next(OfficialMail::class, 'mail_number', 'OFF');
     }
 
     public function updatedSelectedTemplate($val)
@@ -62,19 +64,23 @@ class OfficialMailIndex extends Component
 
     public function save()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'mail_number' => 'required|string',
             'mail_date' => 'required|date',
             'sender_recipient' => 'required|string',
             'reason_subject' => 'required|string',
+            'patient_id' => 'nullable|exists:patients,id',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx|max:10240',
         ]);
 
         $filePath = null;
         if ($this->file) {
-            $filePath = $this->file->store('official_mails', 'public');
+            $filePath = $this->file->store('official_mails', 'local');
         }
 
-        OfficialMail::create([
+        $mail = OfficialMail::create([
             'mail_number' => $this->mail_number,
             'patient_id' => $this->patient_id ?: null,
             'direction' => $this->direction,
@@ -86,9 +92,11 @@ class OfficialMailIndex extends Component
             'file_path' => $filePath,
         ]);
 
+        AuditLoggerService::log('created', $mail, null, $mail->toArray());
+
         $this->showModal = false;
         $this->reset(['mail_number', 'patient_id', 'sender_recipient', 'reason_subject', 'letter_body', 'file', 'selected_template']);
-        $this->mail_number = 'OFF-' . date('Y') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $this->mail_number = CodeGenerator::next(OfficialMail::class, 'mail_number', 'OFF');
 
         session()->flash('message', 'نوسراوی فەرمی بە سەرکەوتوویی تۆمارکرا.');
     }
@@ -99,9 +107,11 @@ class OfficialMailIndex extends Component
 
         if ($this->search) {
             $s = '%'.$this->search.'%';
-            $query->where('mail_number', 'like', $s)
+            $query->where(function ($q) use ($s) {
+                $q->where('mail_number', 'like', $s)
                   ->orWhere('sender_recipient', 'like', $s)
                   ->orWhere('reason_subject', 'like', $s);
+            });
         }
 
         if ($this->filter_direction) {

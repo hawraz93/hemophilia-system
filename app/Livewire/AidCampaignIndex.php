@@ -7,6 +7,7 @@ use App\Models\Assistance;
 use App\Models\AssistanceCampaign;
 use App\Models\Patient;
 use App\Services\AuditLoggerService;
+use App\Services\CodeGenerator;
 use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -39,11 +40,14 @@ class AidCampaignIndex extends Component
 
     public function createCampaign()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string',
             'max_recipients' => 'required|integer|min:1',
             'campaign_date' => 'required|date',
+            'amount_per_patient' => 'required|integer|min:0',
         ]);
 
         $campaign = AssistanceCampaign::create([
@@ -75,6 +79,8 @@ class AidCampaignIndex extends Component
 
     public function addPatientToCampaign(int $patientId)
     {
+        $this->authorize('edit-records');
+
         if (!$this->selectedCampaignId) return;
 
         $campaign = AssistanceCampaign::findOrFail($this->selectedCampaignId);
@@ -94,7 +100,7 @@ class AidCampaignIndex extends Component
 
         // Also record in patient assistance history for individual tracking
         $patient = Patient::findOrFail($patientId);
-        $assistanceNumber = 'AID-'.date('Y').'-'.str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $assistanceNumber = CodeGenerator::next(Assistance::class, 'assistance_number', 'AID');
 
         Assistance::create([
             'assistance_number' => $assistanceNumber,
@@ -114,6 +120,8 @@ class AidCampaignIndex extends Component
 
     public function removePatientFromCampaign(int $patientId)
     {
+        $this->authorize('edit-records');
+
         if (!$this->selectedCampaignId) return;
 
         $campaign = AssistanceCampaign::findOrFail($this->selectedCampaignId);
@@ -126,8 +134,10 @@ class AidCampaignIndex extends Component
     {
         $campaigns = AssistanceCampaign::withCount('patients')
             ->when($this->search, function ($q) {
-                $q->where('title', 'like', '%'.$this->search.'%')
-                  ->orWhere('source_funder', 'like', '%'.$this->search.'%');
+                $q->where(function ($q) {
+                    $q->where('title', 'like', '%'.$this->search.'%')
+                      ->orWhere('source_funder', 'like', '%'.$this->search.'%');
+                });
             })
             ->latest()
             ->paginate(10);

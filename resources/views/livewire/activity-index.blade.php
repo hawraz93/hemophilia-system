@@ -1,4 +1,6 @@
 <div class="space-y-6">
+    <x-flash-messages />
+
     <!-- Header Card & Actions -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
         <div>

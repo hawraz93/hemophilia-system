@@ -1,4 +1,6 @@
 <div class="space-y-6">
+    <x-flash-messages />
+
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-black text-slate-900 dark:text-white">بەڵگەنامەکانی هاتوو و ڕۆشتوو</h1>
@@ -85,7 +87,7 @@
                             </td>
                             <td class="p-4 text-center flex items-center justify-center gap-2">
                                 @if($m->file_path)
-                                    <a href="{{ Storage::url($m->file_path) }}" target="_blank" class="p-1.5 rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-200 transition" title="بینینی فایلی بارکراو">
+                                    <a href="{{ route('mails.file', $m) }}" target="_blank" class="p-1.5 rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-200 transition" title="بینینی فایلی بارکراو">
                                         <x-icon name="paper-clip" class="w-4 h-4" />
                                     </a>
                                 @endif

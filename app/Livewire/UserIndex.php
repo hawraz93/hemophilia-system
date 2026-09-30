@@ -2,11 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\AuditLoggerService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class UserIndex extends Component
@@ -19,6 +22,11 @@ class UserIndex extends Component
     public string $password = '';
     public string $role = 'staff';
 
+    public function mount()
+    {
+        $this->authorize('manage-users');
+    }
+
     public function openModal()
     {
         $this->reset(['name', 'username', 'email', 'password', 'role']);
@@ -27,14 +35,21 @@ class UserIndex extends Component
 
     public function save()
     {
+        $this->authorize('manage-users');
+
+        $assignable = array_map(fn (UserRole $r) => $r->value, UserRole::assignableBy(auth()->user()->role));
+
         $this->validate([
             'name' => 'required|string|max:100',
             'username' => 'required|string|unique:users,username',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
+            'role' => ['required', Rule::in($assignable)],
+        ], [
+            'role.in' => 'تۆ ناتوانیت ئەم دەسەڵاتە بدەیت بە بەکارهێنەر.',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $this->name,
             'username' => $this->username,
             'email' => $this->email,
@@ -42,6 +57,8 @@ class UserIndex extends Component
             'role' => $this->role,
             'is_active' => true,
         ]);
+
+        AuditLoggerService::log('user_created', $user, null, $user->only(['name', 'username', 'email', 'role']));
 
         $this->showCreateModal = false;
         session()->flash('message', 'بەکارهێنەری نوێ بە سەرکەوتوویی دروستکرا.');
@@ -51,31 +68,45 @@ class UserIndex extends Component
     public ?int $selectedUserId = null;
     public string $new_password = '';
 
+    /**
+     * Find a user the current admin is allowed to manage (never themselves).
+     */
+    private function manageableUser(int $userId): User
+    {
+        $this->authorize('manage-users');
+
+        $user = User::findOrFail($userId);
+        abort_if($user->id === auth()->id() || ! auth()->user()->canManage($user), 403);
+
+        return $user;
+    }
+
     public function toggleActive($userId)
     {
-        $user = User::findOrFail($userId);
-        if ($user->id === auth()->id()) {
-            return;
-        }
+        $user = $this->manageableUser($userId);
 
         $user->is_active = !$user->is_active;
         $user->save();
+
+        AuditLoggerService::log($user->is_active ? 'user_activated' : 'user_deactivated', $user);
+
         session()->flash('message', 'دۆخی بەکارهێنەر نویستکرایەوە.');
     }
 
     public function deleteUser($userId)
     {
-        $user = User::findOrFail($userId);
-        if ($user->id === auth()->id()) {
-            return;
-        }
+        $user = $this->manageableUser($userId);
 
+        AuditLoggerService::log('user_deleted', $user, $user->only(['name', 'username', 'email', 'role']));
         $user->delete();
+
         session()->flash('message', 'بەکارهێنەر بە سەرکەوتوویی سڕدرایەوە.');
     }
 
     public function openResetModal($userId)
     {
+        $this->manageableUser($userId);
+
         $this->selectedUserId = $userId;
         $this->new_password = '';
         $this->showResetModal = true;
@@ -84,12 +115,14 @@ class UserIndex extends Component
     public function resetPassword()
     {
         $this->validate([
-            'new_password' => 'required|string|min:6',
+            'new_password' => 'required|string|min:8',
         ]);
 
-        $user = User::findOrFail($this->selectedUserId);
+        $user = $this->manageableUser($this->selectedUserId);
         $user->password = Hash::make($this->new_password);
         $user->save();
+
+        AuditLoggerService::log('user_password_reset', $user);
 
         $this->showResetModal = false;
         session()->flash('message', 'وشەی نهێنی بەکارهێنەر بە سەرکەوتوویی گۆڕدرا.');
@@ -97,12 +130,21 @@ class UserIndex extends Component
 
     public function createBackup()
     {
-        Artisan::call('app:backup-database');
-        session()->flash('message', 'بەکئەپی نوێی داتابەیس بە سەرکەوتوویی دروستکرا.');
+        $this->authorize('manage-users');
+
+        $exitCode = Artisan::call('app:backup-database');
+
+        if ($exitCode === 0) {
+            session()->flash('message', 'بەکئەپی نوێی داتابەیس بە سەرکەوتوویی دروستکرا.');
+        } else {
+            session()->flash('error', 'دروستکردنی بەکئەپ سەرکەوتوو نەبوو: '.trim(Artisan::output()));
+        }
     }
 
     public function downloadBackup(string $filename)
     {
+        $this->authorize('manage-users');
+
         $path = storage_path('app/backups/' . basename($filename));
         if (File::exists($path)) {
             return response()->download($path);

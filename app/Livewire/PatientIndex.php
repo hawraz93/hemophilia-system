@@ -37,7 +37,7 @@ class PatientIndex extends Component
         $this->resetPage();
     }
 
-    public function exportExcel()
+    private function filteredQuery()
     {
         $query = Patient::query();
 
@@ -64,7 +64,12 @@ class PatientIndex extends Component
             $query->where('blood_group', $this->filter_blood);
         }
 
-        $patients = $query->latest()->get();
+        return $query->latest();
+    }
+
+    public function exportExcel()
+    {
+        $patients = $this->filteredQuery()->get();
 
         $headers = [
             'کۆدی نەخۆش',
@@ -104,32 +109,7 @@ class PatientIndex extends Component
 
     public function render()
     {
-        $query = Patient::query();
-
-        if ($this->search) {
-            $s = '%'.$this->search.'%';
-            $query->where(function ($q) use ($s) {
-                $q->where('full_name', 'like', $s)
-                  ->orWhere('patient_code', 'like', $s)
-                  ->orWhere('membership_number', 'like', $s)
-                  ->orWhere('hiwa_code', 'like', $s)
-                  ->orWhere('phone', 'like', $s);
-            });
-        }
-
-        if ($this->filter_type) {
-            $query->where('hemophilia_type', $this->filter_type);
-        }
-
-        if ($this->filter_status) {
-            $query->where('list_status', $this->filter_status);
-        }
-
-        if ($this->filter_blood) {
-            $query->where('blood_group', $this->filter_blood);
-        }
-
-        $patients = $query->latest()->paginate(15);
+        $patients = $this->filteredQuery()->paginate(15);
 
         return view('livewire.patient-index', compact('patients'));
     }

@@ -1,4 +1,6 @@
 <div class="space-y-6">
+    <x-flash-messages />
+
     <!-- Top Patient Profile Header Card -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div class="flex items-center gap-4">
@@ -269,12 +271,12 @@
                     @forelse($patient->documents as $doc)
                         @php
                             $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
-                            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
+                            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                         @endphp
                         <div x-data="{ hovered: false }" @mouseenter="hovered = true" @mouseleave="hovered = false" class="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition">
                             <div class="relative w-full h-40 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-700 group">
                                 @if($isImage)
-                                    <img src="{{ Storage::url($doc->file_path) }}" alt="{{ $doc->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                                    <img src="{{ route('patient-documents.view', $doc) }}" alt="{{ $doc->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                                 @else
                                     <div class="flex flex-col items-center gap-2 text-rose-600">
                                         <x-icon name="document-text" class="w-12 h-12" />
@@ -285,7 +287,7 @@
                                 <!-- Overlay Hover Buttons -->
                                 <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     <button 
-                                        @click="$dispatch('open-lightbox', { title: '{{ $doc->title }}', type: '{{ $doc->document_type?->label() }}', url: '{{ Storage::url($doc->file_path) }}', isImage: {{ $isImage ? 'true' : 'false' }}, printUrl: '{{ route('patient-documents.print', $doc) }}', downloadUrl: '{{ route('patient-documents.download', $doc) }}' })" 
+                                        @click="$dispatch('open-lightbox', { title: @js($doc->title), type: @js($doc->document_type?->label()), url: @js(route('patient-documents.view', $doc)), isImage: @js($isImage), printUrl: @js(route('patient-documents.print', $doc)), downloadUrl: @js(route('patient-documents.download', $doc)) })" 
                                         class="p-2.5 rounded-xl bg-white text-slate-900 font-bold hover:bg-rose-600 hover:text-white transition shadow" 
                                         title="بینین و گەورەکردنەوە (Fullscreen Lightbox)"
                                     >
