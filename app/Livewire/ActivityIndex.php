@@ -60,6 +60,8 @@ class ActivityIndex extends Component
 
     public function editActivity(Activity $activity)
     {
+        $this->authorize('edit-records');
+
         $this->editingActivity = $activity;
         $this->title = $activity->title;
         $this->activity_type = $activity->activity_type;
@@ -76,6 +78,8 @@ class ActivityIndex extends Component
 
     public function save()
     {
+        $this->authorize('edit-records');
+
         $this->validate();
 
         $data = [
@@ -103,15 +107,13 @@ class ActivityIndex extends Component
 
     public function deleteActivity(Activity $activity)
     {
-        if (auth()->user()->isViewer()) {
-            return;
-        }
+        $this->authorize('edit-records');
 
         $activity->delete();
         session()->flash('message', 'چالاکی بە سەرکەوتوویی سڕدرایەوە.');
     }
 
-    public function exportExcel()
+    private function filteredQuery()
     {
         $query = Activity::latest('activity_date');
 
@@ -132,7 +134,12 @@ class ActivityIndex extends Component
             $query->where('status', $this->statusFilter);
         }
 
-        $activities = $query->get();
+        return $query;
+    }
+
+    public function exportExcel()
+    {
+        $activities = $this->filteredQuery()->get();
 
         $headers = ['ناونیشانی چالاکی', 'جۆری چالاکی', 'بەروار', 'شوێن', 'ڕێکخەر', 'بەشداربووان', 'بودجە (IQD)', 'دۆخ'];
         $rows = [];
@@ -155,26 +162,7 @@ class ActivityIndex extends Component
 
     public function render()
     {
-        $query = Activity::latest('activity_date');
-
-        if (!empty($this->search)) {
-            $s = '%'.$this->search.'%';
-            $query->where(function ($q) use ($s) {
-                $q->where('title', 'like', $s)
-                  ->orWhere('location', 'like', $s)
-                  ->orWhere('organizer', 'like', $s);
-            });
-        }
-
-        if (!empty($this->typeFilter)) {
-            $query->where('activity_type', $this->typeFilter);
-        }
-
-        if (!empty($this->statusFilter)) {
-            $query->where('status', $this->statusFilter);
-        }
-
-        $activities = $query->paginate(15);
+        $activities = $this->filteredQuery()->paginate(15);
         $totalActivities = Activity::count();
         $totalParticipants = Activity::sum('participants_count');
         $totalBudget = Activity::sum('budget');

@@ -122,9 +122,18 @@ class Patient extends Model
         return $this->morphMany(AuditLog::class, 'auditable')->latest();
     }
 
-    public function getPhotoAttribute(): ?string
+    public function photoDocument(): HasOne
     {
-        $doc = $this->documents()->where('document_type', 'patient_photo')->latest()->first();
-        return $doc ? $doc->file_path : null;
+        return $this->hasOne(PatientDocument::class)
+            ->where('document_type', 'patient_photo')
+            ->latestOfMany();
+    }
+
+    /**
+     * Always derive the age from the date of birth so it never goes stale.
+     */
+    public function getAgeAttribute(?int $value): ?int
+    {
+        return $this->dob?->age ?? $value;
     }
 }

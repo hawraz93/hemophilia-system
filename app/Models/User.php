@@ -60,4 +60,12 @@ class User extends Authenticatable
     {
         return $this->role === UserRole::Viewer;
     }
+
+    /**
+     * A user may only manage accounts whose role is not higher than their own.
+     */
+    public function canManage(User $other): bool
+    {
+        return $this->isAdmin() && $other->role->rank() <= $this->role->rank();
+    }
 }

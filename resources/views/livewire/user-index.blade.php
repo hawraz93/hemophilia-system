@@ -1,4 +1,6 @@
 <div class="space-y-8">
+    <x-flash-messages />
+
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-black text-slate-900 dark:text-white">بەڕێوەبردنی بەکارهێنەران، بەکئەپ و Audit Log</h1>
@@ -44,7 +46,7 @@
                         </span>
                     </div>
 
-                    @if($user->id !== auth()->id())
+                    @if($user->id !== auth()->id() && auth()->user()->canManage($user))
                         <div class="flex items-center gap-1">
                             <button wire:click="openResetModal({{ $user->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition" title="گۆڕینی وشەی نهێنی">
                                 <x-icon name="key" class="w-4 h-4" />
@@ -159,7 +161,7 @@
             <x-input type="email" wire:model="email" label="ئیمەیڵ *" placeholder="user@hemophilia.org" />
             <x-password wire:model="password" label="وشەی نهێنی (Password) *" />
             <x-native-select wire:model="role" label="دەسەڵاتی بەکارهێنەر">
-                @foreach(\App\Enums\UserRole::cases() as $r)
+                @foreach(\App\Enums\UserRole::assignableBy(auth()->user()->role) as $r)
                     <option value="{{ $r->value }}">{{ $r->label() }}</option>
                 @endforeach
             </x-native-select>

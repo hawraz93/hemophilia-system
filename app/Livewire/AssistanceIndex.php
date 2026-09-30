@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Enums\AssistanceCategory;
 use App\Models\Assistance;
 use App\Models\Patient;
+use App\Services\AuditLoggerService;
+use App\Services\CodeGenerator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -35,15 +37,17 @@ class AssistanceIndex extends Component
 
     public function save()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'patient_id' => 'required|exists:patients,id',
             'assistance_date' => 'required|date',
             'amount' => 'required|integer|min:0',
         ]);
 
-        $assistanceNumber = 'AID-'.date('Y').'-'.str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $assistanceNumber = CodeGenerator::next(Assistance::class, 'assistance_number', 'AID');
 
-        Assistance::create([
+        $assistance = Assistance::create([
             'assistance_number' => $assistanceNumber,
             'patient_id' => $this->patient_id,
             'assistance_date' => $this->assistance_date,
@@ -53,6 +57,8 @@ class AssistanceIndex extends Component
             'notes' => $this->notes,
             'user_id' => auth()->id(),
         ]);
+
+        AuditLoggerService::log('created', $assistance, null, $assistance->toArray());
 
         $this->showCreateModal = false;
         $this->reset(['patient_id', 'amount', 'source_funder', 'notes']);
@@ -65,9 +71,11 @@ class AssistanceIndex extends Component
 
         if ($this->search) {
             $s = '%'.$this->search.'%';
-            $query->whereHas('patient', function ($q) use ($s) {
-                $q->where('full_name', 'like', $s)->orWhere('patient_code', 'like', $s);
-            })->orWhere('assistance_number', 'like', $s);
+            $query->where(function ($q) use ($s) {
+                $q->whereHas('patient', function ($p) use ($s) {
+                    $p->where('full_name', 'like', $s)->orWhere('patient_code', 'like', $s);
+                })->orWhere('assistance_number', 'like', $s);
+            });
         }
 
         if ($this->filter_category) {

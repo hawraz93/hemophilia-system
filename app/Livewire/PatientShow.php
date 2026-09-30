@@ -16,8 +16,10 @@ use App\Models\Patient;
 use App\Models\PatientContact;
 use App\Models\PatientDocument;
 use App\Services\AuditLoggerService;
+use App\Services\CodeGenerator;
 use App\Services\PatientStatusEvaluator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -87,19 +89,18 @@ class PatientShow extends Component
         $this->med_date = Carbon::now()->format('Y-m-d');
         $this->mail_date = Carbon::now()->format('Y-m-d');
         $this->pay_date = Carbon::now()->format('Y-m-d');
-
-        // Evaluate Patient status on view
-        PatientStatusEvaluator::evaluate($this->patient);
     }
 
     public function uploadDocument()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'doc_title' => 'required|string|max:255',
-            'doc_file' => 'required|file|max:10240', // max 10MB
+            'doc_file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx|max:10240', // max 10MB
         ]);
 
-        $path = $this->doc_file->store('patient_documents', 'public');
+        $path = $this->doc_file->store('patient_documents', 'local');
 
         PatientDocument::create([
             'patient_id' => $this->patient->id,
@@ -124,17 +125,15 @@ class PatientShow extends Component
 
     public function deleteDocument($docId)
     {
-        if (auth()->user()->isViewer()) {
-            return;
-        }
+        $this->authorize('edit-records');
 
         $doc = PatientDocument::where('patient_id', $this->patient->id)->findOrFail($docId);
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($doc->file_path)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
+        foreach (['local', 'public'] as $disk) {
+            Storage::disk($disk)->delete($doc->file_path);
         }
         $doc->delete();
 
-        AuditLoggerService::log('document_deleted', $this->patient);
+        AuditLoggerService::log('document_deleted', $this->patient, ['title' => $doc->title, 'file_path' => $doc->file_path]);
 
         $this->patient->refresh();
         PatientStatusEvaluator::evaluate($this->patient);
@@ -144,12 +143,14 @@ class PatientShow extends Component
 
     public function addAssistance()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'aid_date' => 'required|date',
             'aid_amount' => 'required|integer|min:0',
         ]);
 
-        $assistanceNumber = 'AID-'.date('Y').'-'.str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $assistanceNumber = CodeGenerator::next(Assistance::class, 'assistance_number', 'AID');
 
         Assistance::create([
             'assistance_number' => $assistanceNumber,
@@ -171,6 +172,8 @@ class PatientShow extends Component
 
     public function addContact()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'contact_date' => 'required|date',
         ]);
@@ -202,6 +205,8 @@ class PatientShow extends Component
 
     public function addMedicalLog()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'med_date' => 'required|date',
         ]);
@@ -226,15 +231,18 @@ class PatientShow extends Component
 
     public function addOfficialMail()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'mail_number' => 'required|string',
             'mail_date' => 'required|date',
             'mail_subject' => 'required|string',
+            'mail_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx|max:10240',
         ]);
 
         $filePath = null;
         if ($this->mail_file) {
-            $filePath = $this->mail_file->store('official_mails', 'public');
+            $filePath = $this->mail_file->store('official_mails', 'local');
         }
 
         OfficialMail::create([
@@ -256,6 +264,8 @@ class PatientShow extends Component
 
     public function recordMembershipPayment()
     {
+        $this->authorize('edit-records');
+
         $this->validate([
             'pay_amount' => 'required|integer|min:1',
             'pay_date' => 'required|date',

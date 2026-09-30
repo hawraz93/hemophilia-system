@@ -116,13 +116,13 @@
         <div class="doc-preview-container">
             @php
                 $ext = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
-                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
+                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
             @endphp
 
             @if($isImage)
-                <img src="{{ Storage::url($document->file_path) }}" alt="{{ $document->title }}" />
+                <img src="{{ route('patient-documents.view', $document) }}" alt="{{ $document->title }}" />
             @else
-                <iframe src="{{ Storage::url($document->file_path) }}"></iframe>
+                <iframe src="{{ route('patient-documents.view', $document) }}"></iframe>
             @endif
         </div>
     </div>

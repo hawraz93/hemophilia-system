@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Patient;
 use App\Services\AuditLoggerService;
+use App\Services\CodeGenerator;
 use App\Services\PatientStatusEvaluator;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class PatientForm extends Component
@@ -47,6 +49,8 @@ class PatientForm extends Component
 
     public function mount(?Patient $patient = null)
     {
+        $this->authorize('edit-records');
+
         if ($patient && $patient->exists) {
             $this->patient = $patient;
             $this->isEditing = true;
@@ -84,7 +88,7 @@ class PatientForm extends Component
             $this->medical_notes = $patient->medical_notes;
         } else {
             $this->isEditing = false;
-            $this->patient_code = 'PAT-'.date('Y').'-'.str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $this->patient_code = CodeGenerator::next(Patient::class, 'patient_code', 'PAT');
         }
     }
 
@@ -97,17 +101,29 @@ class PatientForm extends Component
 
     public function save()
     {
+        $this->authorize('edit-records');
+
+        // The code shown on the form may have been taken by another user meanwhile
+        if (! $this->isEditing) {
+            $this->patient_code = CodeGenerator::next(Patient::class, 'patient_code', 'PAT');
+        }
+
         $this->validate([
             'first_name' => 'required|string|max:100',
             'father_name' => 'required|string|max:100',
             'grandfather_name' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
             'hemophilia_type' => 'required|string',
+            'membership_number' => [
+                'nullable', 'string', 'max:50',
+                Rule::unique('patients', 'membership_number')->ignore($this->patient?->id),
+            ],
         ], [
             'first_name.required' => 'تکایە ناوی ناوخۆیی بنووسە.',
             'father_name.required' => 'تکایە ناوی باوک بنووسە.',
             'grandfather_name.required' => 'تکایە ناوی باپیر بنووسە.',
             'phone.required' => 'تکایە ژمارەی مۆبایل بنووسە.',
+            'membership_number.unique' => 'ئەم ژمارەی ئەندامێتییە پێشتر بۆ نەخۆشێکی تر تۆمارکراوە.',
         ]);
 
         $fullName = trim("{$this->first_name} {$this->father_name} {$this->grandfather_name}");
@@ -119,7 +135,7 @@ class PatientForm extends Component
             'grandfather_name' => $this->grandfather_name,
             'full_name' => $fullName,
             'hiwa_code' => $this->hiwa_code,
-            'membership_number' => $this->membership_number,
+            'membership_number' => $this->membership_number ?: null,
             'membership_type' => $this->membership_type,
             'party_affiliation' => $this->party_affiliation ?: null,
             'voting_card_number' => $this->voting_card_number,

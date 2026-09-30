@@ -334,8 +334,8 @@
                 <!-- Left Side: Photo + Signature & Stamp -->
                 <div class="front-left-side">
                     <div class="patient-photo-placeholder">
-                        @if($patient->photo)
-                            <img src="{{ Storage::url($patient->photo) }}" alt="Photo" />
+                        @if($patient->photoDocument)
+                            <img src="{{ route('patient-documents.view', $patient->photoDocument) }}" alt="Photo" />
                         @else
                             {{ mb_substr($patient->first_name, 0, 1) }}
                         @endif
