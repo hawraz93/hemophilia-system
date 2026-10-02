@@ -15,6 +15,7 @@ class MembershipPayment extends Model
         'patient_id',
         'payment_date',
         'amount_paid',
+        'is_exempt',
         'receipt_number',
         'notes',
         'user_id',
@@ -25,6 +26,7 @@ class MembershipPayment extends Model
         return [
             'payment_date' => 'date',
             'amount_paid' => 'integer',
+            'is_exempt' => 'boolean',
         ];
     }
 

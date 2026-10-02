@@ -8,7 +8,7 @@
         </div>
 
         @if(!auth()->user()->isViewer())
-            <x-button primary icon="plus" wire:click="$set('showModal', true)" class="font-bold shadow-lg shadow-rose-600/25">
+            <x-button primary icon="plus" wire:click="openCreateModal" class="font-bold shadow-lg shadow-rose-600/25">
                 تۆمارکردنی نوسراوی نوێ
             </x-button>
         @endif
@@ -95,6 +95,18 @@
                                 <a href="{{ route('mails.print', $m) }}" target="_blank" class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-400 transition" title="چاپکردنی نوسراو (Print A4)">
                                     <x-icon name="printer" class="w-4 h-4" />
                                 </a>
+
+                                @can('edit-records')
+                                    <button wire:click="editMail({{ $m->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 transition" title="دەستکاریکردن">
+                                        <x-icon name="pencil-square" class="w-4 h-4" />
+                                    </button>
+                                @endcan
+
+                                @can('delete-records')
+                                    <button wire:click="deleteMail({{ $m->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم نوسراوە و فایلەکەی؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition" title="سڕینەوە">
+                                        <x-icon name="trash" class="w-4 h-4" />
+                                    </button>
+                                @endcan
                             </td>
                         </tr>
                     @empty
@@ -114,7 +126,7 @@
     </div>
 
     <!-- Create Modal -->
-    <x-modal-card title="تۆمارکردن / دروستکردنی نوسراوی نوێ" wire:model="showModal" max-width="lg">
+    <x-modal-card :title="$editingMailId ? 'دەستکاریکردنی نوسراو' : 'تۆمارکردن / دروستکردنی نوسراوی نوێ'" wire:model="showModal" max-width="lg">
         <div class="space-y-4">
             <!-- Template Picker -->
             <div class="bg-indigo-50/70 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 space-y-2">
@@ -152,15 +164,8 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <x-datetime-picker wire:model="mail_date" label="بەرواری نوسراو *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-                <x-native-select wire:model="patient_id" label="نەخۆشی پەیوەندیدار (ئەگەر هەیە)">
-                    <option value="">نەخۆشی پەیوەندیدار نییە (نوسراوی گشتی)</option>
-                    @foreach($allPatients as $p)
-                        <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
-                    @endforeach
-                </x-native-select>
-            </div>
+            <x-datetime-picker wire:model="mail_date" label="بەرواری نوسراو *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
+            <x-patient-picker label="نەخۆشی پەیوەندیدار (ئەگەر هەیە، بەتاڵ = نوسراوی گشتی)" :selected="$selectedPatient" :results="$patientResults" :term="$patientLookup" />
 
             <x-input wire:model="sender_recipient" label="لایەنی نێرەر / وەرگر *" placeholder="نەخۆشخانەی هیوا / وەزارەتی تەندروستی..." />
             <x-input wire:model="reason_subject" label="هۆکار / بابەتی نوسراو *" placeholder="داواکاری فاکتەر / نوسراوی پشتگیری..." />

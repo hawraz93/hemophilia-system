@@ -169,8 +169,25 @@ class PatientForm extends Component
             AuditLoggerService::log('updated', $this->patient, $oldValues, $this->patient->toArray());
             $savedPatient = $this->patient;
         } else {
+            // On a slow line the same form can be submitted twice (double click, or a retry after
+            // the first response was lost). Reuse the patient the first submission just created.
+            $duplicate = Patient::where('full_name', $fullName)
+                ->where('phone', $this->phone)
+                ->where('created_at', '>=', now()->subMinutes(10))
+                ->first();
+
+            if ($duplicate) {
+                session()->flash('message', 'ئەم نەخۆشە پێشتر پاشەکەوت کراوە.');
+
+                return redirect()->route('patients.show', $duplicate);
+            }
+
             $savedPatient = Patient::create($data);
             AuditLoggerService::log('created', $savedPatient, null, $savedPatient->toArray());
+
+            // Any request already queued behind this one becomes an update, not a second insert
+            $this->patient = $savedPatient;
+            $this->isEditing = true;
         }
 
         // Evaluate list status (Green / Yellow / Red)

@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Enums\FundingSource;
+use App\Models\Assistance;
 use App\Models\Membership;
 use App\Models\MembershipPayment;
-use App\Models\Patient;
+use App\Services\FinanceSummary;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -29,7 +31,15 @@ class MembershipIndex extends Component
 
         $payments = $query->latest()->paginate(15);
         $totalCollected = (clone $query)->sum('amount_paid');
+        $finance = FinanceSummary::get();
 
-        return view('livewire.membership-index', compact('payments', 'totalCollected'));
+        // Aid paid out of the association's own income
+        $internalSpending = Assistance::with('patient')
+            ->whereIn('funding_source', [FundingSource::MembershipIncome, FundingSource::GeneralIncome])
+            ->latest('assistance_date')
+            ->take(10)
+            ->get();
+
+        return view('livewire.membership-index', compact('payments', 'totalCollected', 'finance', 'internalSpending'));
     }
 }

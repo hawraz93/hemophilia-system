@@ -8,6 +8,7 @@ use App\Livewire\AssistanceIndex;
 use App\Livewire\Auth\Login;
 use App\Livewire\ContactIndex;
 use App\Livewire\DashboardComponent;
+use App\Livewire\GuidelineIndex;
 use App\Livewire\MedicalIndex;
 use App\Livewire\MembershipIndex;
 use App\Livewire\OfficialMailIndex;
@@ -51,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/memberships', MembershipIndex::class)->name('memberships.index');
     Route::get('/contacts', ContactIndex::class)->name('contacts.index');
     Route::get('/medical', MedicalIndex::class)->name('medical.index');
+    Route::get('/guidelines', GuidelineIndex::class)->name('guidelines.index');
     Route::get('/mails', OfficialMailIndex::class)->name('mails.index');
     Route::get('/reports', ReportIndex::class)->name('reports.index');
     Route::get('/about-dev', AboutDeveloper::class)->name('about.developer');
@@ -62,6 +64,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/patient-documents/{document}/download', 'downloadDocument')->name('patient-documents.download');
         Route::get('/patient-documents/{document}/print', 'printDocument')->name('patient-documents.print');
         Route::get('/mails/{mail}/file', 'viewMail')->name('mails.file');
+        Route::get('/guidelines/{guideline}/file', 'viewGuideline')->name('guidelines.file');
     });
 
     // Printable Views
@@ -70,7 +73,7 @@ Route::middleware('auth')->group(function () {
     })->name('patients.id-card');
 
     Route::get('/patients/{patient}/support-letter', function (Patient $patient, Request $request) {
-        $recipient = $request->query('recipient', 'سەرجەم لایەنە پەیوەندیدارەکان');
+        $recipient = $request->query('recipient', 'لایەنی پەیوەندیدار');
         $subject = $request->query('subject', 'نوسراوی پشتگیری');
         $ref_no = $request->query('ref_no', 'SUP-' . date('Y') . '-' . str_pad($patient->id, 4, '0', STR_PAD_LEFT));
         return view('print.support-letter', compact('patient', 'recipient', 'subject', 'ref_no'));
@@ -82,7 +85,7 @@ Route::middleware('auth')->group(function () {
     })->name('patients.summary-report');
 
     Route::get('/aid-campaigns/{campaign}/print', function (AssistanceCampaign $campaign) {
-        $campaign->load('patients');
+        $campaign->load(['patients' => fn ($q) => $q->orderBy('assistance_campaign_patients.received_at')->orderBy('patients.id')]);
         return view('print.aid-campaign-report', compact('campaign'));
     })->name('aid-campaigns.print');
 

@@ -29,6 +29,13 @@
                 <option value="transport">گواستنەوە</option>
                 <option value="other">هاوکاری تر</option>
             </x-native-select>
+
+            <x-native-select wire:model.live="filter_funding" class="w-full sm:w-56">
+                <option value="">هەموو سەرچاوەکانی پارە</option>
+                @foreach(\App\Enums\FundingSource::cases() as $src)
+                    <option value="{{ $src->value }}">{{ $src->shortLabel() }}</option>
+                @endforeach
+            </x-native-select>
         </div>
 
         <div class="bg-emerald-50 dark:bg-emerald-950/40 px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center sm:text-end shrink-0">
@@ -48,8 +55,10 @@
                         <th class="p-4">بەروار</th>
                         <th class="p-4">جۆری هاوکاری</th>
                         <th class="p-4">سەرچاوەی هاوکاری</th>
+                        <th class="p-4">سەرچاوەی پارە</th>
                         <th class="p-4">بڕی پارە (IQD)</th>
                         <th class="p-4">تێبینی</th>
+                        @can('delete-records')<th class="p-4"></th>@endcan
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -73,16 +82,26 @@
                             <td class="p-4 text-slate-600 dark:text-slate-300">
                                 {{ $aid->source_funder ?? '—' }}
                             </td>
+                            <td class="p-4 text-xs font-bold text-slate-600 dark:text-slate-300">
+                                {{ $aid->funding_source?->shortLabel() ?? '—' }}
+                            </td>
                             <td class="p-4 font-black text-emerald-600">
                                 {{ number_format($aid->amount) }}
                             </td>
                             <td class="p-4 text-xs text-slate-500 max-w-xs truncate">
                                 {{ $aid->notes ?? '—' }}
                             </td>
+                            @can('delete-records')
+                                <td class="p-4">
+                                    <button wire:click="deleteAssistance({{ $aid->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم هاوکارییە؟ ئەگەر لە کۆگاوە بووبێت دانەکە دەگەڕێتەوە بۆ کۆگا." class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition" title="سڕینەوە">
+                                        <x-icon name="trash" class="w-4 h-4" />
+                                    </button>
+                                </td>
+                            @endcan
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-400">
+                            <td colspan="9" class="p-8 text-center text-slate-400">
                                 هیچ هاوکارییەک نەدۆزرایەوە.
                             </td>
                         </tr>
@@ -99,12 +118,7 @@
     <!-- Create Modal -->
     <x-modal-card title="تۆمارکردنی هاوکاری نوێ" wire:model="showCreateModal" max-width="lg">
         <div class="space-y-4">
-            <x-native-select wire:model="patient_id" label="هەڵبژاردنی نەخۆش *">
-                <option value="">نەخۆش هەڵبژێرە...</option>
-                @foreach($allPatients as $p)
-                    <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_code }})</option>
-                @endforeach
-            </x-native-select>
+            <x-patient-picker label="هەڵبژاردنی نەخۆش *" :selected="$selectedPatient" :results="$patientResults" :term="$patientLookup" />
 
             <x-datetime-picker wire:model="assistance_date" label="بەرواری هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
 
@@ -119,7 +133,13 @@
             </x-native-select>
 
             <x-currency wire:model="amount" label="بڕی پارە (IQD) *" thousands="," :precision="0" placeholder="0" />
-            <x-input wire:model="source_funder" label="سەرچاوەی هاوکاری" placeholder="خێرخواز / رێکخراو" />
+            <x-native-select wire:model="funding_source" label="سەرچاوەی پارە *">
+                @foreach(\App\Enums\FundingSource::directOptions() as $src)
+                    <option value="{{ $src->value }}">{{ $src->label() }}</option>
+                @endforeach
+            </x-native-select>
+            <p class="text-[11px] text-slate-500 -mt-2">ئەگەر لە داهاتی ئەندامێتی یان داهاتی گشتی بێت، بڕەکە ڕاستەوخۆ لە باڵانسی کۆمەڵە کەم دەکرێتەوە.</p>
+            <x-input wire:model="source_funder" label="ناوی بەخشەر / لایەن" placeholder="کۆمپانیا، کەسایەتی، ڕێکخراو..." />
             <x-textarea wire:model="notes" label="تێبینی" />
         </div>
 
