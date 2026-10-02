@@ -74,6 +74,13 @@
                 <x-icon name="identification" class="w-4 h-4" />
                 <span>دروستکردنی کارتی ناسنامە</span>
             </a>
+
+            @can('delete-records')
+                <button wire:click="deletePatientPermanently" wire:confirm="ئاگاداری: ئەم نەخۆشە و هەموو تۆمارەکانی (هاوکاری، ئەندامێتی، پزیشکی، بەڵگەنامە و فایلەکان) بە تەواوی و بۆ هەمیشە دەسڕێنەوە و ناگەڕێنەوە. دڵنیایت؟" class="px-3.5 py-2 rounded-xl bg-white text-rose-700 border border-rose-300 font-bold text-xs hover:bg-rose-600 hover:text-white transition flex items-center gap-1.5 shadow-sm">
+                    <x-icon name="trash" class="w-4 h-4" />
+                    <span>سڕینەوەی تەواوی نەخۆش</span>
+                </button>
+            @endcan
         </div>
     </div>
 
@@ -317,14 +324,14 @@
                                 </div>
                             </div>
 
-                            @if(!auth()->user()->isViewer())
+                            @can('delete-records')
                                 <div class="pt-2 border-t border-slate-200 dark:border-slate-700/80 flex justify-end">
                                     <button wire:click="deleteDocument({{ $doc->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم بەڵگەنامەیە؟" class="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1">
                                         <x-icon name="trash" class="w-3.5 h-3.5" />
                                         <span>سڕینەوە</span>
                                     </button>
                                 </div>
-                            @endif
+                            @endcan
                         </div>
                     @empty
                         <div class="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
@@ -355,8 +362,10 @@
                                 <th class="p-3">بەروار</th>
                                 <th class="p-3">جۆری هاوکاری</th>
                                 <th class="p-3">سەرچاوە / دابینکەر</th>
+                                <th class="p-3">سەرچاوەی پارە</th>
                                 <th class="p-3">بڕی دراو (IQD)</th>
                                 <th class="p-3">تێبینی</th>
+                                @can('delete-records')<th class="p-3"></th>@endcan
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -365,13 +374,21 @@
                                     <td class="p-3 font-mono font-bold">{{ $aid->assistance_number }}</td>
                                     <td class="p-3 text-slate-500">{{ $aid->assistance_date->format('Y-m-d') }}</td>
                                     <td class="p-3 font-bold">{{ $aid->category->label() }}</td>
-                                    <td class="p-3">{{ $aid->source_funder ?? '—' }}</td>
+                                    <td class="p-3">{{ $aid->source_funder ?: '—' }}</td>
+                                    <td class="p-3 text-xs font-bold">{{ $aid->funding_source?->shortLabel() ?? '—' }}</td>
                                     <td class="p-3 font-black text-emerald-600">{{ number_format($aid->amount) }}</td>
                                     <td class="p-3 text-xs text-slate-500">{{ $aid->notes ?? '—' }}</td>
+                                    @can('delete-records')
+                                        <td class="p-3">
+                                            <button wire:click="deleteAssistance({{ $aid->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم هاوکارییە؟ ئەگەر لە کۆگاوە بووبێت دانەکە دەگەڕێتەوە بۆ کۆگا." class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition" title="سڕینەوە">
+                                                <x-icon name="trash" class="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    @endcan
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ هاوکارییەک تۆمار نەکراوە.</td>
+                                    <td colspan="8" class="p-8 text-center text-slate-400">هیچ هاوکارییەک تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -398,6 +415,7 @@
                                 <th class="p-3">ژمارەی وەسڵ</th>
                                 <th class="p-3">بڕی دانراو (IQD)</th>
                                 <th class="p-3">تێبینی</th>
+                                @can('delete-records')<th class="p-3"></th>@endcan
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -405,12 +423,24 @@
                                 <tr>
                                     <td class="p-3 font-mono">{{ $pay->payment_date->format('Y-m-d') }}</td>
                                     <td class="p-3 font-mono font-bold">{{ $pay->receipt_number ?? '—' }}</td>
-                                    <td class="p-3 font-black text-emerald-600">{{ number_format($pay->amount_paid) }}</td>
+                                    <td class="p-3 font-black text-emerald-600">
+                                        {{ number_format($pay->amount_paid) }}
+                                        @if($pay->is_exempt)
+                                            <span class="ms-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300">لێخۆشبوون</span>
+                                        @endif
+                                    </td>
                                     <td class="p-3 text-xs text-slate-500">{{ $pay->notes ?? '—' }}</td>
+                                    @can('delete-records')
+                                        <td class="p-3">
+                                            <button wire:click="deleteMembershipPayment({{ $pay->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم وەسڵە؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition" title="سڕینەوە">
+                                                <x-icon name="trash" class="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    @endcan
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="p-8 text-center text-slate-400">هیچ رسوماتێکی ئەندامێتی تۆمار نەکراوە.</td>
+                                    <td colspan="5" class="p-8 text-center text-slate-400">هیچ رسوماتێکی ئەندامێتی تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -439,6 +469,7 @@
                                 <th class="p-3">فاکتەر / دەرمان</th>
                                 <th class="p-3">وردەکاری</th>
                                 <th class="p-3">تێبینی پزیشک</th>
+                                @can('delete-records')<th class="p-3"></th>@endcan
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -450,10 +481,17 @@
                                     <td class="p-3 font-semibold text-rose-600">{{ $med->factor_name_dose ?? '—' }}</td>
                                     <td class="p-3 text-xs text-slate-600 dark:text-slate-300">{{ $med->details ?? '—' }}</td>
                                     <td class="p-3 text-xs text-slate-500">{{ $med->doctor_notes ?? '—' }}</td>
+                                    @can('delete-records')
+                                        <td class="p-3">
+                                            <button wire:click="deleteMedicalLog({{ $med->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم تۆمارە پزیشکییە؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition" title="سڕینەوە">
+                                                <x-icon name="trash" class="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    @endcan
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ تۆمارێکی پزیشکی تۆمار نەکراوە.</td>
+                                    <td colspan="7" class="p-8 text-center text-slate-400">هیچ تۆمارێکی پزیشکی تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -481,6 +519,7 @@
                                 <th class="p-3">ئەنجامی پەیوەندی</th>
                                 <th class="p-3">تێبینی و دەرئەنجام</th>
                                 <th class="p-3">تۆمارکەر</th>
+                                @can('delete-records')<th class="p-3"></th>@endcan
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -497,10 +536,17 @@
                                     </td>
                                     <td class="p-3 text-xs text-slate-600 dark:text-slate-300">{{ $con->outcome_notes ?? '—' }}</td>
                                     <td class="p-3 text-xs text-slate-500">{{ $con->user?->name ?? '—' }}</td>
+                                    @can('delete-records')
+                                        <td class="p-3">
+                                            <button wire:click="deleteContact({{ $con->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم تۆمارەی پەیوەندی؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition" title="سڕینەوە">
+                                                <x-icon name="trash" class="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    @endcan
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="p-8 text-center text-slate-400">هیچ پەیوەندییەکی بەدواداچوون تۆمار نەکراوە.</td>
+                                    <td colspan="6" class="p-8 text-center text-slate-400">هیچ پەیوەندییەکی بەدواداچوون تۆمار نەکراوە.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -710,7 +756,14 @@
     <x-modal-card title="تۆمارکردنی وەسلێک (رسوماتی ئەندامێتی)" wire:model="showPaymentModal" max-width="md">
         <form wire:submit="recordMembershipPayment" class="space-y-4">
             <x-datetime-picker wire:model="pay_date" label="بەرواری پارەدان *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            <x-currency wire:model="pay_amount" label="بڕی دانراو (IQD) *" thousands="," :precision="0" placeholder="25000" />
+            <x-checkbox wire:model.live="pay_exempt" label="لێخۆشبوون (٠ دینار) — تێکڕای خاڵەکانی فۆرمی ئەندامبوون ٨٠ خاڵ و سەرووترە" />
+            @if($pay_exempt)
+                <div class="p-3 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold dark:bg-amber-950/50 dark:text-amber-300">
+                    بڕی پارە سفر دینار تۆمار دەکرێت و ئەم ئەندامە لە پارەی ئەندامێتی ساڵانە بەخشراوە بەپێی بڕیاری کارگێڕی کۆمەڵە.
+                </div>
+            @else
+                <x-currency wire:model="pay_amount" label="بڕی دانراو (IQD) *" thousands="," :precision="0" placeholder="25000" />
+            @endif
             <x-input wire:model="pay_receipt" label="ژمارەی وەسڵ" placeholder="مثلاً: 123456" />
             <x-textarea wire:model="pay_notes" label="تێبینی" placeholder="تێبینی زیادە..." />
 
@@ -724,17 +777,52 @@
     <!-- Assistance / Aid Modal -->
     <x-modal-card title="تۆمارکردنی هاوکاری نوێ" wire:model="showAidModal" max-width="md">
         <form wire:submit="addAssistance" class="space-y-4">
-            <x-datetime-picker wire:model="aid_date" label="بەرواری هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
-            
-            <x-native-select wire:model="aid_category" label="جۆری هاوکاری *">
-                @foreach(\App\Enums\AssistanceCategory::cases() as $cat)
-                    <option value="{{ $cat->value }}">{{ $cat->label() }}</option>
-                @endforeach
-            </x-native-select>
+            <x-datetime-picker wire:model="aid_date" label="بەرواری دابەشکردن / هاوکاری *" :without-time="true" display-format="YYYY-MM-DD" parse-format="YYYY-MM-DD" />
 
-            <x-currency wire:model="aid_amount" label="بڕی هاوکاری (IQD) *" thousands="," :precision="0" placeholder="0" />
-            <x-input wire:model="aid_funder" label="سەرچاوە / دابینکەر" placeholder="خێرخواز، ڕێکخراو..." />
-            <x-textarea wire:model="aid_notes" label="تێبینی" placeholder="تێبینی زیاتر..." />
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" wire:click="$set('aid_mode', 'campaign')" class="p-3 rounded-xl border text-xs font-extrabold transition {{ $aid_mode === 'campaign' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700' }}">
+                    لە هاوکارییە هاتووەکانی کۆگا
+                </button>
+                <button type="button" wire:click="$set('aid_mode', 'direct')" class="p-3 rounded-xl border text-xs font-extrabold transition {{ $aid_mode === 'direct' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700' }}">
+                    هاوکاری ڕاستەوخۆ / دارایی
+                </button>
+            </div>
+
+            @if($aid_mode === 'campaign')
+                <x-native-select wire:model="aid_campaign_id" label="کام هاوکاری پێ بدرێت؟ *">
+                    <option value="">— هەڵبژێرە —</option>
+                    @foreach($availableCampaigns as $camp)
+                        <option value="{{ $camp->id }}">{{ $camp->title }} — {{ $camp->source_funder ?: 'بێ سەرچاوە' }} ({{ $camp->remaining_count }} ماوە لە {{ $camp->max_recipients }})</option>
+                    @endforeach
+                </x-native-select>
+                @if($availableCampaigns->isEmpty())
+                    <p class="text-xs font-bold text-amber-600">هیچ هاوکارییەک لە کۆگادا نەماوە کە ئەم نەخۆشە پێشتر وەری نەگرتبێت.</p>
+                @endif
+            @else
+                <x-native-select wire:model="aid_category" label="جۆری هاوکاری *">
+                    @foreach(\App\Enums\AssistanceCategory::cases() as $cat)
+                        <option value="{{ $cat->value }}">{{ $cat->label() }}</option>
+                    @endforeach
+                </x-native-select>
+
+                <x-native-select wire:model.live="aid_funding_source" label="سەرچاوەی پارە / هاوکاری *">
+                    @foreach(\App\Enums\FundingSource::directOptions() as $src)
+                        <option value="{{ $src->value }}">{{ $src->label() }}</option>
+                    @endforeach
+                </x-native-select>
+
+                @if($finance && in_array($aid_funding_source, ['membership_income', 'general_income']))
+                    <div class="p-3 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold dark:bg-blue-950/50 dark:text-blue-300">
+                        باڵانسی داهاتی ئەندامێتی: {{ number_format($finance['membership_balance']) }} IQD |
+                        باڵانسی داهاتی گشتی: {{ number_format($finance['general_balance']) }} IQD
+                        <span class="block font-semibold mt-1">ئەم بڕە ڕاستەوخۆ لە باڵانسی {{ $aid_funding_source === 'membership_income' ? 'داهاتی ئەندامێتی و داهاتی گشتی' : 'داهاتی گشتی' }} کەم دەکرێتەوە.</span>
+                    </div>
+                @endif
+
+                <x-currency wire:model="aid_amount" label="بڕی هاوکاری (IQD) *" thousands="," :precision="0" placeholder="0" />
+                <x-input wire:model="aid_funder" label="ناوی بەخشەر / لایەن" placeholder="کۆمپانیا، کەسایەتی، شوێن..." />
+                <x-textarea wire:model="aid_notes" label="تێبینی" placeholder="تێبینی زیاتر..." />
+            @endif
 
             <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
                 <x-button flat label="پاشگەزبوونەوە" x-on:click="close" />

@@ -6,9 +6,7 @@
 
         <title>کۆمەڵەی هیمۆفیلیای کوردستان - لقی سلێمانی</title>
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{{ asset('fonts/vazirmatn.css') }}">
 
         <link rel="manifest" href="/manifest.json">
         <meta name="theme-color" content="#e11d48">

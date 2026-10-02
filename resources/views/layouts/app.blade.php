@@ -6,9 +6,7 @@
 
         <title>{{ $title ?? 'سیستەمی بەڕێوەبردنی نەخۆشانی هیمۆفیلیا' }}</title>
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{{ asset('fonts/vazirmatn.css') }}">
 
         <link rel="manifest" href="/manifest.json">
         <meta name="theme-color" content="#e11d48">
@@ -45,11 +43,45 @@
                     border-color: #cbd5e1 !important;
                 }
             }
+
+            [x-cloak] { display: none !important; }
+
+            /* While a request is in flight the clicked button / submitted form cannot be used again,
+               so a slow line cannot cause double saves */
+            [data-loading]:is(button, a, [role="button"]),
+            form[data-loading] button {
+                pointer-events: none !important;
+                opacity: 0.6;
+                cursor: wait;
+            }
         </style>
     </head>
     <body class="h-full font-sans antialiased text-slate-800 dark:text-slate-100 selection:bg-rose-500 selection:text-white">
         <x-notifications position="top-center" />
         <x-dialog />
+
+        <!-- Connection status: offline / slow line / request that did not reach the server -->
+        <div
+            x-data="{ online: navigator.onLine, slow: false, failed: false }"
+            x-on:online.window="online = true"
+            x-on:offline.window="online = false"
+            x-on:net-slow.window="slow = $event.detail"
+            x-on:net-failed.window="failed = true; setTimeout(() => failed = false, 8000)"
+            class="fixed bottom-4 inset-x-0 z-[100] flex justify-center px-4 pointer-events-none print:hidden"
+        >
+            <div x-show="!online" x-cloak class="pointer-events-auto px-4 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-extrabold shadow-xl flex items-center gap-2">
+                <x-icon name="signal-slash" class="w-4 h-4" />
+                <span>هێڵی ئینتەرنێت پچڕاوە. هیچ شتێک پاشەکەوت ناکرێت تا هێڵ دەگەڕێتەوە.</span>
+            </div>
+            <div x-show="online && failed" x-cloak class="pointer-events-auto px-4 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-extrabold shadow-xl flex items-center gap-2">
+                <x-icon name="exclamation-triangle" class="w-4 h-4" />
+                <span>داواکارییەکە نەگەیشتە سێرڤەر. پێش دووبارەکردنەوە سەیری لیستەکە بکە بزانە پاشەکەوت بووە یان نا.</span>
+            </div>
+            <div x-show="online && !failed && slow" x-cloak class="pointer-events-auto px-4 py-2.5 rounded-2xl bg-amber-500 text-white text-xs font-extrabold shadow-xl flex items-center gap-2">
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.3"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3"/></svg>
+                <span>هێڵ خاوە، چاوەڕێ بکە... تکایە دووبارە کلیک مەکە.</span>
+            </div>
+        </div>
 
         <div x-data="{ sidebarOpen: false, showInstallModal: false }" class="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950">
             <!-- Sidebar -->
@@ -159,6 +191,13 @@
                             <div class="flex items-center gap-3">
                                 <x-icon name="phone" class="w-4 h-4 shrink-0" />
                                 <span>تۆماری بەدواداچوون</span>
+                            </div>
+                        </a>
+
+                        <a href="{{ route('guidelines.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-150 {{ request()->routeIs('guidelines.*') ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/25' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                            <div class="flex items-center gap-3">
+                                <x-icon name="book-open" class="w-4 h-4 shrink-0" />
+                                <span>ڕێنماییەکانی کۆمەڵە</span>
                             </div>
                         </a>
 
@@ -313,6 +352,41 @@
         @wireUiScripts
 
         <script>
+            // Tell the connection banner when a request is slow or never reached the server
+            document.addEventListener('livewire:init', () => {
+                let pending = 0;
+
+                Livewire.interceptRequest(({ onSend, onFailure, onFinish }) => {
+                    let timer = null;
+                    let counted = false;
+
+                    const done = () => {
+                        clearTimeout(timer);
+                        if (counted) {
+                            counted = false;
+                            pending--;
+                            if (pending <= 0) {
+                                pending = 0;
+                                window.dispatchEvent(new CustomEvent('net-slow', { detail: false }));
+                            }
+                        }
+                    };
+
+                    onSend(() => {
+                        timer = setTimeout(() => {
+                            counted = true;
+                            pending++;
+                            window.dispatchEvent(new CustomEvent('net-slow', { detail: true }));
+                        }, 2500);
+                    });
+                    onFailure(() => {
+                        done();
+                        window.dispatchEvent(new CustomEvent('net-failed'));
+                    });
+                    onFinish(done);
+                });
+            });
+
             function handleInstallClick() {
                 if (window.deferredPrompt) {
                     window.deferredPrompt.prompt();

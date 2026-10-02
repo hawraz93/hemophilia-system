@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guideline;
 use App\Models\OfficialMail;
 use App\Models\PatientDocument;
 use Illuminate\Support\Facades\Storage;
@@ -39,6 +40,11 @@ class SecureFileController extends Controller
         abort_unless($mail->file_path, 404);
 
         return $this->serve($mail->file_path, 'mail_'.$mail->mail_number, inline: true);
+    }
+
+    public function viewGuideline(Guideline $guideline): StreamedResponse
+    {
+        return $this->serve($guideline->file_path, $guideline->title, inline: true);
     }
 
     private function serve(string $path, string $name, bool $inline): StreamedResponse

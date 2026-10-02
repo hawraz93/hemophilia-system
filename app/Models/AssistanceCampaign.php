@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AssistanceCampaign extends Model
 {
@@ -19,6 +20,7 @@ class AssistanceCampaign extends Model
         'amount_per_patient',
         'max_recipients',
         'campaign_date',
+        'distribution_date',
         'notes',
         'status',
         'user_id',
@@ -28,6 +30,7 @@ class AssistanceCampaign extends Model
     {
         return [
             'campaign_date' => 'date',
+            'distribution_date' => 'date',
             'category' => AssistanceCategory::class,
             'amount_per_patient' => 'integer',
             'max_recipients' => 'integer',
@@ -44,6 +47,17 @@ class AssistanceCampaign extends Model
         return $this->belongsToMany(Patient::class, 'assistance_campaign_patients', 'campaign_id', 'patient_id')
                     ->withPivot('received_at', 'notes')
                     ->withTimestamps();
+    }
+
+    public function assistances(): HasMany
+    {
+        return $this->hasMany(Assistance::class, 'campaign_id');
+    }
+
+    /** Units still in the store (received quantity minus what has been handed out). */
+    public function getRemainingCountAttribute(): int
+    {
+        return max(0, $this->max_recipients - ($this->patients_count ?? $this->recipients_count));
     }
 
     public function getRecipientsCountAttribute(): int

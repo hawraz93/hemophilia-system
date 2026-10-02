@@ -139,15 +139,17 @@
                             </td>
                             <td class="p-3.5 text-center print:hidden">
                                 <div class="flex items-center justify-center gap-1">
-                                    <button wire:click="editActivity({{ $act->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 transition" title="دەستکاریکردن">
-                                        <x-icon name="pencil-square" class="w-4 h-4" />
-                                    </button>
+                                    @can('edit-records')
+                                        <button wire:click="editActivity({{ $act->id }})" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 transition" title="دەستکاریکردن">
+                                            <x-icon name="pencil-square" class="w-4 h-4" />
+                                        </button>
+                                    @endcan
 
-                                    @if(!auth()->user()->isViewer())
+                                    @can('delete-records')
                                         <button wire:click="deleteActivity({{ $act->id }})" wire:confirm="ئایا دڵنیایت لە سڕینەوەی ئەم چالاکییە؟" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition" title="سڕینەوە">
                                             <x-icon name="trash" class="w-4 h-4" />
                                         </button>
-                                    @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

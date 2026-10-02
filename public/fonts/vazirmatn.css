@@ -1,0 +1,8 @@
+/* Vazirmatn (SIL Open Font License, see vazirmatn/OFL.txt), served locally so the app and printed documents do not depend on an internet connection. */
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('vazirmatn/Vazirmatn-wght.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}

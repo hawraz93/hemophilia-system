@@ -107,7 +107,7 @@ class ActivityIndex extends Component
 
     public function deleteActivity(Activity $activity)
     {
-        $this->authorize('edit-records');
+        $this->authorize('delete-records');
 
         $activity->delete();
         session()->flash('message', 'چالاکی بە سەرکەوتوویی سڕدرایەوە.');

@@ -26,5 +26,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Creating / editing / deleting records: everyone except Viewer
         Gate::define('edit-records', fn (User $user) => $user->isStaff());
+
+        // Deleting records, files and patients (incl. permanent patient removal): admins only
+        Gate::define('delete-records', fn (User $user) => $user->isAdmin());
     }
 }
