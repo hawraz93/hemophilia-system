@@ -21,6 +21,7 @@ use App\Livewire\UserProfile;
 use App\Models\AssistanceCampaign;
 use App\Models\OfficialMail;
 use App\Models\Patient;
+use App\Services\AidDistributionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -88,6 +89,12 @@ Route::middleware('auth')->group(function () {
         $campaign->load(['patients' => fn ($q) => $q->orderBy('assistance_campaign_patients.received_at')->orderBy('patients.id')]);
         return view('print.aid-campaign-report', compact('campaign'));
     })->name('aid-campaigns.print');
+
+    Route::get('/aid-campaigns/{campaign}/non-recipients/print', function (AssistanceCampaign $campaign) {
+        $patients = AidDistributionService::nonRecipientsQuery($campaign)->get();
+        $distributed = $campaign->patients()->count();
+        return view('print.aid-campaign-non-recipients', compact('campaign', 'patients', 'distributed'));
+    })->name('aid-campaigns.non-recipients.print');
 
     Route::get('/mails/{mail}/print', function (OfficialMail $mail) {
         return view('print.official-mail-print', compact('mail'));

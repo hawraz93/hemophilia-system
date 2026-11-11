@@ -88,6 +88,32 @@ class ClientFeedbackTest extends TestCase
         $response->assertSee('2026-08-22');
     }
 
+    public function test_patients_left_out_of_an_aid_are_listed_by_priority_and_printable(): void
+    {
+        $this->actingAs($this->makeUser(UserRole::Staff));
+
+        $earlier = $this->makeCampaign(5, ['title' => 'Earlier basket', 'campaign_date' => '2026-05-01']);
+        $campaign = $this->makeCampaign(2);
+
+        $gotThis = $this->makePatient(['full_name' => 'Got This One']);
+        $gotEarlierOld = $this->makePatient(['full_name' => 'Got Earlier Old']);
+        $gotEarlierRecent = $this->makePatient(['full_name' => 'Got Earlier Recent']);
+        $never = $this->makePatient(['full_name' => 'Never Received']);
+
+        AidDistributionService::distribute($earlier, $gotEarlierOld, '2026-05-02');
+        AidDistributionService::distribute($earlier, $gotEarlierRecent, '2026-07-01');
+        AidDistributionService::distribute($campaign, $gotThis, '2026-08-22');
+
+        $ids = AidDistributionService::nonRecipientsQuery($campaign)->pluck('id')->all();
+        $this->assertSame([$never->id, $gotEarlierOld->id, $gotEarlierRecent->id], $ids);
+
+        $this->get(route('aid-campaigns.non-recipients.print', $campaign))
+            ->assertOk()
+            ->assertSeeInOrder([$never->patient_code, $gotEarlierOld->patient_code, $gotEarlierRecent->patient_code])
+            ->assertDontSee($gotThis->patient_code)
+            ->assertSee('2026-05-02');
+    }
+
     public function test_campaign_stores_distribution_date_and_tracks_remaining_stock(): void
     {
         $this->actingAs($this->makeUser(UserRole::Staff));

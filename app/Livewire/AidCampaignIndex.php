@@ -213,8 +213,8 @@ class AidCampaignIndex extends Component
 
         $eligiblePatients = [];
         if ($this->showManageModal && $selectedCampaign) {
-            $existingIds = $selectedCampaign->patients->pluck('id')->toArray();
-            $query = Patient::whereNotIn('id', $existingIds);
+            // Non-recipients, most deserving first (never got this kind of aid / waited longest)
+            $query = AidDistributionService::nonRecipientsQuery($selectedCampaign);
             if ($this->patientSearch) {
                 $s = '%'.$this->patientSearch.'%';
                 $query->where(function ($q) use ($s) {
@@ -227,6 +227,8 @@ class AidCampaignIndex extends Component
             $eligiblePatients = $query->take(12)->get();
         }
 
-        return view('livewire.aid-campaign-index', compact('campaigns', 'selectedCampaign', 'eligiblePatients', 'stockTotals'));
+        $totalPatients = Patient::count();
+
+        return view('livewire.aid-campaign-index', compact('campaigns', 'selectedCampaign', 'eligiblePatients', 'stockTotals', 'totalPatients'));
     }
 }
