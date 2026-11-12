@@ -101,10 +101,11 @@ class BackupDatabaseCommand extends Command
                 continue;
             }
             foreach (File::allFiles($root) as $file) {
-                if ($file->getFilename() === '.gitignore') {
+                $relative = str_replace('\\', '/', $file->getRelativePathname());
+                if ($file->getFilename() === '.gitignore' || str_starts_with($relative, 'livewire-tmp/')) {
                     continue;
                 }
-                $zip->addFile($file->getPathname(), "files/{$name}/".str_replace('\\', '/', $file->getRelativePathname()));
+                $zip->addFile($file->getPathname(), "files/{$name}/{$relative}");
             }
         }
 

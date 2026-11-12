@@ -6,6 +6,7 @@ use App\Livewire\Concerns\SearchesPatients;
 use App\Models\OfficialMail;
 use App\Services\AuditLoggerService;
 use App\Services\CodeGenerator;
+use App\Services\UploadedFileStorageService;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -142,7 +143,8 @@ class OfficialMailIndex extends Component
         ];
 
         if ($this->file) {
-            $data['file_path'] = $this->file->store('official_mails', 'local');
+            $data['file_path'] = app(UploadedFileStorageService::class)
+                ->storeOptimized($this->file, 'official_mails', 'local')['path'];
         }
 
         if ($this->editingMailId) {

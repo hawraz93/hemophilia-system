@@ -22,6 +22,7 @@ use App\Services\AuditLoggerService;
 use App\Services\CodeGenerator;
 use App\Services\FinanceSummary;
 use App\Services\PatientStatusEvaluator;
+use App\Services\UploadedFileStorageService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -114,15 +115,15 @@ class PatientShow extends Component
             'doc_file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx|max:10240', // max 10MB
         ]);
 
-        $path = $this->doc_file->store('patient_documents', 'local');
+        $stored = app(UploadedFileStorageService::class)->storeOptimized($this->doc_file, 'patient_documents', 'local');
 
         PatientDocument::create([
             'patient_id' => $this->patient->id,
             'title' => $this->doc_title,
             'document_type' => $this->doc_type,
-            'file_path' => $path,
-            'file_size' => $this->doc_file->getSize(),
-            'mime_type' => $this->doc_file->getMimeType(),
+            'file_path' => $stored['path'],
+            'file_size' => $stored['size'],
+            'mime_type' => $stored['mime_type'],
         ]);
 
         AuditLoggerService::log('document_uploaded', $this->patient);
@@ -297,7 +298,8 @@ class PatientShow extends Component
 
         $filePath = null;
         if ($this->mail_file) {
-            $filePath = $this->mail_file->store('official_mails', 'local');
+            $filePath = app(UploadedFileStorageService::class)
+                ->storeOptimized($this->mail_file, 'official_mails', 'local')['path'];
         }
 
         OfficialMail::create([
